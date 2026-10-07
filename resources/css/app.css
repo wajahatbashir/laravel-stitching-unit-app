@@ -1,0 +1,127 @@
+@import 'tailwindcss';
+
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+@source '../../storage/framework/views/*.php';
+@source '../**/*.blade.php';
+@source '../**/*.js';
+
+@theme {
+    --font-sans: 'Inter', 'Noto Nastaliq Urdu', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    --color-brand-50: #faf7f1;
+    --color-brand-100: #f3eee5;
+    --color-brand-200: #e4d9c2;
+    --color-brand-300: #cdb98a;
+    --color-brand-400: #c9a24d;
+    --color-brand-500: #a8863a;
+    --color-brand-600: #2b2b2b;
+    --color-brand-700: #171717;
+    --color-brand-800: #0f0f0f;
+    --color-brand-900: #0a0a0a;
+    --color-gold-400: #d6b25e;
+    --color-gold-500: #c9a24d;
+}
+
+@layer base {
+    html { -webkit-tap-highlight-color: transparent; }
+    body { @apply text-slate-800 antialiased; background-color: var(--color-brand-50); }
+    [dir='rtl'] body { line-height: 1.9; }
+}
+
+@layer components {
+    .btn {
+        @apply inline-flex min-h-11 items-center justify-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold transition active:scale-[.98] disabled:opacity-50;
+    }
+    .btn-primary { @apply bg-brand-700 text-white shadow-sm hover:bg-brand-800; }
+    .btn-gold { @apply bg-gold-500 text-brand-900 hover:bg-gold-400; }
+    .btn-ghost { @apply bg-white text-slate-700 ring-1 ring-slate-300 hover:bg-slate-50; }
+    .btn-danger { @apply bg-white text-rose-700 ring-1 ring-rose-300 hover:bg-rose-50; }
+    .btn-sm { @apply min-h-9 rounded-lg px-3 py-1.5 text-xs; }
+    .input {
+        @apply block w-full rounded-xl border-0 bg-white px-3 py-2.5 text-base text-slate-900 ring-1 ring-slate-300 placeholder:text-slate-400 focus:ring-2 focus:ring-brand-500 focus:outline-none md:text-sm;
+    }
+    .label { @apply mb-1 block text-sm font-medium text-slate-700; }
+    .card { @apply rounded-2xl bg-white shadow-sm ring-1 ring-slate-200; }
+    .badge { @apply inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium; }
+    .th { @apply px-3 py-2.5 text-start text-xs font-semibold tracking-wide text-slate-500 uppercase; }
+    .td { @apply px-3 py-3 text-sm whitespace-nowrap; }
+    .nav-link { @apply flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-slate-600 hover:bg-brand-50 hover:text-brand-800; }
+    .nav-link.active { @apply bg-brand-100 text-brand-800; }
+    .stat { @apply rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-200; }
+}
+
+/* ---- Calendar (vanilla-calendar-pro) in brand colours ---- */
+.vc[data-vc-theme='light'] {
+    --vc-date-selected-bg: var(--color-brand-700);
+    --vc-date-selected-color: #fff;
+    --vc-date-today-color: var(--color-gold-500);
+    --vc-date-weekend-today-color: var(--color-gold-500);
+    --vc-date-weekend-selected-bg: var(--color-brand-700);
+    --vc-date-weekend-selected-color: #fff;
+    --vc-months-years-bg-selected: var(--color-brand-700);
+    --vc-months-years-color-selected: #fff;
+    --vc-focus-outline-color: var(--color-gold-500);
+    font-family: inherit;
+}
+.vc[data-vc-input] {
+    z-index: 70;
+    border-radius: 1rem;
+    box-shadow: 0 12px 40px rgb(0 0 0 / 0.18);
+    max-width: calc(100vw - 1.5rem);
+}
+.vc .vc-date__btn, .vc .vc-months__month, .vc .vc-years__year { min-height: 2.5rem; }
+.dp-quick { display: flex; gap: .5rem; padding: .5rem .75rem .75rem; }
+.dp-quick button {
+    flex: 1; min-height: 2.5rem; border-radius: .75rem; font-size: .875rem; font-weight: 600;
+    background: var(--color-brand-100); color: var(--color-brand-800);
+}
+.dp-quick button:hover { background: var(--color-brand-200); }
+.dp-quick button[data-dp$='-year'] { flex: 0 0 2.75rem; font-size: 1.25rem; line-height: 1; }
+
+/* ---- Shell: segmented controls, phone tab bar ---- */
+.seg { display: flex; align-items: center; justify-content: center; gap: .3rem; min-height: 2.25rem; border-radius: .65rem; color: var(--color-slate-600); transition: background .15s; }
+.seg:hover { color: var(--color-slate-900); }
+.seg-on { background: #fff; color: var(--color-brand-900); box-shadow: 0 1px 2px rgb(0 0 0 / .12); }
+.tab { position: relative; display: flex; min-height: 4rem; flex-direction: column; align-items: center; justify-content: center; gap: .125rem; padding-top: .25rem; }
+.tab-on { color: var(--color-brand-800); font-weight: 600; }
+.tab-on::before { content: ''; position: absolute; top: 0; inset-inline-start: 50%; translate: -50% 0; width: 2rem; height: 3px; border-radius: 0 0 3px 3px; background: var(--color-gold-500); }
+
+/* ---- Dark mode: remap the palette, then fix the few surfaces that use fixed white ---- */
+.dark {
+    color-scheme: dark;
+    --color-brand-50: #0c0c0e; --color-brand-100: #222226; --color-brand-200: #34343a; --color-brand-300: #4b4b53;
+    --color-brand-600: #d8b45f; --color-brand-700: #c9a24d; --color-brand-800: #dcb85f; --color-brand-900: #f5efe3;
+    --color-slate-50: #1d1d21; --color-slate-100: #26262b; --color-slate-200: #34343b; --color-slate-300: #4a4a52;
+    --color-slate-400: #8b8b96; --color-slate-500: #a2a2ad; --color-slate-600: #bdbdc7; --color-slate-700: #d6d6de;
+    --color-slate-800: #ececf1; --color-slate-900: #f8f8fa;
+    --color-emerald-50: #0f2a20; --color-emerald-100: #12372a; --color-emerald-200: #1d5a43; --color-emerald-700: #6ee7b7; --color-emerald-800: #86efac;
+    --color-rose-50: #33141b; --color-rose-100: #44181f; --color-rose-200: #6b2430; --color-rose-700: #fda4af; --color-rose-800: #fecdd3;
+    --color-amber-50: #33260d; --color-amber-100: #42310e; --color-amber-200: #6b4d12; --color-amber-700: #fcd34d; --color-amber-800: #fde68a;
+    --color-sky-100: #0c2d44; --color-sky-800: #bae6fd;
+}
+.dark :is(.bg-white, .card, .stat, .btn-ghost) { background-color: #17171a; }
+.dark .input { background-color: #0f0f11; }
+.dark .input:focus { background-color: #0f0f11 !important; }
+.dark .bg-white\/95 { background-color: rgb(23 23 26 / .95); }
+.dark .ring-white { --tw-ring-color: #0c0c0e; }
+.dark .seg-on { background: #34343b; color: #fff; }
+.dark .btn-primary, .dark .btn-gold, .dark .bg-brand-700 { color: #0a0a0a; }
+.dark .btn-primary:hover { background-color: var(--color-gold-400); }
+.dark .vc[data-vc-theme='light'] {
+    --vc-bg: #1b1b1f; --vc-color: #e9e9ee; --vc-header-color: #e9e9ee; --vc-title-color: #fff; --vc-week-day-color: #9a9aa6;
+    --vc-date-color: #e9e9ee; --vc-date-hover-bg: #2a2a30; --vc-date-weekend-color: #fb7185; --vc-date-outside-color: #6b6b75;
+    --vc-date-disabled-color: #55555e; --vc-months-years-bg: #1b1b1f; --vc-months-years-color: #d6d6de; --vc-months-years-bg-hover: #2a2a30;
+    --vc-date-selected-bg: #c9a24d; --vc-date-selected-color: #0a0a0a; --vc-date-weekend-selected-bg: #c9a24d; --vc-date-weekend-selected-color: #0a0a0a;
+    --vc-months-years-bg-selected: #c9a24d; --vc-months-years-color-selected: #0a0a0a;
+}
+input[type='search']::-webkit-search-cancel-button, input[type='search']::-webkit-search-decoration { -webkit-appearance: none; appearance: none; display: none; }
+.dark .vc[data-vc-theme='light'] { --vc-date-bg: transparent; --vc-date-bg-hover: #2a2a30; --vc-date-weekend-bg-hover: #2a2a30; --vc-date-weekend-outside-bg: transparent; --vc-date-hover-edge-bg: #2a2a30; }
+.dark .vc [data-vc-arrow] { color: #e9e9ee; }
+.dark .vc [data-vc-arrow]::before { filter: invert(1); }
+.dark .vc-date__btn, .dark .vc [data-vc-date-btn] { background-color: transparent; }
+.dark .vc [data-vc-date-btn]:hover { background-color: #2a2a30; }
+.dark .vc [data-vc-date-selected] [data-vc-date-btn], .dark .vc [data-vc-date-btn][aria-selected='true'] { background-color: #c9a24d; color: #0a0a0a; }
+.dark .vc[data-vc-theme="light"] { --vc-date-today-bg: #2a2a30; }
+
+/* ---- Dashboard charts: validated series colours (gold + blue), stepped for dark ---- */
+.viz { --viz-rev: #b8893a; --viz-cost: #2a78d6; }
+.dark .viz { --viz-cost: #3987e5; }
