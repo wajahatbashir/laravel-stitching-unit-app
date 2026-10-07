@@ -4,6 +4,16 @@ A mobile-first business management app for a ladies' garment **stitching unit**:
 
 Built with **Laravel 12 · PHP 8.3 · MySQL 8 · Blade + Tailwind 4 + Alpine 3**, installable as a **PWA**, available in **English and Urdu (RTL)**.
 
+## Screenshots
+
+Made-up demo data, light theme. The dark theme and the Urdu (RTL) layout are switchable from the account menu.
+
+![Dashboard on desktop: money position, revenue vs costs, orders and expenses](docs/screenshots/dashboard-desktop.png)
+
+| Dashboard on a phone | Production board |
+|---|---|
+| <img src="docs/screenshots/dashboard-mobile.png" alt="Dashboard on a phone" width="300"> | <img src="docs/screenshots/production-board.png" alt="Production board by stage" width="620"> |
+
 ## Features
 
 | Area | What it does |
