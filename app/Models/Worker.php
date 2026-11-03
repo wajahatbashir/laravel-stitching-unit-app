@@ -10,7 +10,7 @@ class Worker extends Model
     use Tracked;
 
     protected $guarded = [];
-    protected $casts = ['joined_at' => 'date', 'is_active' => 'boolean', 'monthly_salary' => 'decimal:2'];
+    protected $casts = ['joined_at' => 'date', 'is_active' => 'boolean', 'monthly_salary' => 'decimal:2', 'opening_due' => 'decimal:2', 'opening_date' => 'date'];
 
     public function user() { return $this->belongsTo(User::class); }
     public function rates() { return $this->hasMany(WorkerRate::class); }
@@ -48,9 +48,24 @@ class Worker extends Model
         return (float) $p->sum('amount');
     }
 
-    /** >0 = we owe the worker; <0 = worker holds an advance that will be adjusted. */
+    /**
+     * Previous due entered on the worker (owed from before the app was used). It is a liability, NOT earnings of the period,
+     * so it is kept out of earned() — profit & loss never counts it. Optionally limited to a date window like the other figures.
+     */
+    public function openingDue(?string $from = null, ?string $to = null): float
+    {
+        $v = (float) $this->opening_due;
+        $d = $this->opening_date?->toDateString();
+        if ($v == 0.0 || ($d && (($from && $d < $from) || ($to && $d > $to)))) {
+            return 0.0;
+        }
+
+        return round($v, 2);
+    }
+
+    /** >0 = we owe the worker (pending); <0 = worker holds an advance that will be adjusted. */
     public function balance(): float
     {
-        return round($this->earned() - $this->paid(), 2);
+        return round($this->openingDue() + $this->earned() - $this->paid(), 2);
     }
 }

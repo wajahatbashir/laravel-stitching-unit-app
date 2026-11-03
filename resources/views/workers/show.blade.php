@@ -48,19 +48,26 @@
 
     {{-- summary --}}
     <div class="grid grid-cols-2 gap-3 lg:grid-cols-5">
-        <div class="stat"><p class="text-xs text-slate-500">{{ __('Brought forward') }}</p><p class="mt-1 text-lg font-bold tabular-nums">{{ money($opening) }}</p></div>
-        <div class="stat"><p class="text-xs text-slate-500">{{ __('Earned') }}</p><p class="mt-1 text-lg font-bold tabular-nums text-emerald-700">{{ money($earned) }}</p></div>
-        <div class="stat"><p class="text-xs text-slate-500">{{ __('Paid / advance') }}</p><p class="mt-1 text-lg font-bold tabular-nums text-brand-700">{{ money($paid) }}</p></div>
-        <div class="stat col-span-2 lg:col-span-2 {{ $closing > 0 ? 'ring-2 ring-rose-300' : '' }}">
-            <p class="text-xs text-slate-500">{{ $closing < 0 ? __('Advance to adjust') : __('Balance to pay') }}</p>
-            <p class="mt-1 text-2xl font-bold tabular-nums {{ $closing > 0 ? 'text-rose-700' : 'text-emerald-700' }}">{{ money(abs($closing)) }}</p>
-            <span class="badge mt-1 {{ $cls }}">{{ $label }}</span>
+        <div class="stat"><p class="text-xs text-slate-500">{{ __('Brought forward') }}</p><p class="mt-1 text-lg font-bold tabular-nums">{{ money($opening) }}</p><p class="text-[11px] text-slate-400">{{ __('balance before this period') }}</p></div>
+        <div class="stat"><p class="text-xs text-slate-500">{{ __('Previous due') }}</p><p class="mt-1 text-lg font-bold tabular-nums text-amber-700">{{ money($prevDue) }}</p><p class="text-[11px] text-slate-400">{{ $w->opening_date && $w->openingDue() != 0 ? __('entered, as of :d', ['d' => fmt_date($w->opening_date)]) : __('owed from before the app') }}</p></div>
+        <div class="stat"><p class="text-xs text-slate-500">{{ $w->type === 'salaried' ? __('Salary & earnings') : __('Earned') }}</p><p class="mt-1 text-lg font-bold tabular-nums text-emerald-700">{{ money($earned) }}</p><p class="text-[11px] text-slate-400">{{ __('work / salary, net of deductions') }}</p></div>
+        <div class="stat"><p class="text-xs text-slate-500">{{ __('Paid') }}</p><p class="mt-1 text-lg font-bold tabular-nums text-brand-700">{{ money($payments) }}</p><p class="text-[11px] text-slate-400">{{ __('wages / salary paid') }}</p></div>
+        <div class="stat col-span-2 lg:col-span-1"><p class="text-xs text-slate-500">{{ __('Advances given') }}</p><p class="mt-1 text-lg font-bold tabular-nums text-amber-700">{{ money($advances) }}</p><p class="text-[11px] text-slate-400">{{ __('adjusted against what is owed') }}</p></div>
+    </div>
+    <div class="stat {{ $closing > 0 ? 'ring-2 ring-rose-300' : ($closing < 0 ? 'ring-2 ring-amber-300' : '') }}">
+        <div class="flex flex-wrap items-center justify-between gap-2">
+            <div>
+                <p class="text-xs text-slate-500">{{ $closing < 0 ? __('Advance still to adjust') : __('Pending — balance to pay') }}</p>
+                <p class="mt-1 text-2xl font-bold tabular-nums {{ $closing > 0 ? 'text-rose-700' : ($closing < 0 ? 'text-amber-700' : 'text-emerald-700') }}">{{ money(abs($closing)) }}</p>
+            </div>
+            <span class="badge {{ $cls }}">{{ $label }}</span>
         </div>
+        <p class="mt-2 text-xs text-slate-500">{{ __('Brought forward') }} {{ money($opening) }} + {{ __('Previous due') }} {{ money($prevDue) }} + {{ __('Earned') }} {{ money($earned) }} − {{ __('Paid') }} {{ money($payments) }} − {{ __('Advances') }} {{ money($advances) }} = <strong>{{ money($closing) }}</strong></p>
     </div>
 
     {{-- pay now --}}
     @if (! $own && $u->can('worker_payments.create'))
-        <form method="POST" action="{{ route('worker-payments.store') }}" class="card p-4" data-offline data-after="{{ request()->getRequestUri() }}" data-label="{{ __('Payment') }} — {{ $w->name }}">
+        <form method="POST" action="{{ route('worker-payments.store') }}" enctype="multipart/form-data" class="card p-4" data-offline data-after="{{ request()->getRequestUri() }}" data-label="{{ __('Payment') }} — {{ $w->name }}">
             @csrf
             <input type="hidden" name="uuid" value="{{ (string) \Illuminate\Support\Str::uuid() }}">
             <input type="hidden" name="worker_id" value="{{ $w->id }}">
@@ -75,6 +82,8 @@
                 <div><label class="label">{{ __('Via') }}</label><select name="mode" class="input"><option value="cash">{{ __('Cash') }}</option><option value="bank">{{ __('Bank') }}</option></select></div>
                 <div class="col-span-2 flex items-end md:col-span-1"><button class="btn btn-primary w-full">{{ __('Pay') }}</button></div>
             </div>
+            <div class="mt-3"><label class="label" for="quick_slip">{{ __('Payment receipt (bank app screenshot / photo)') }}</label>
+                <input id="quick_slip" type="file" name="receipt" accept="image/*,application/pdf" class="input file:me-3 file:rounded-lg file:border-0 file:bg-brand-100 file:px-3 file:py-1.5 file:text-sm file:font-semibold file:text-brand-800"></div>
             <p class="mt-2 text-xs text-slate-500">{{ __('Pay less than the balance for a partial payment — the remainder stays on the ledger and carries to the next payment.') }}</p>
         </form>
     @endif
@@ -89,7 +98,7 @@
                 @foreach ($lines as $l)
                     <div class="p-3">
                         <div class="flex justify-between text-xs text-slate-400"><span>{{ fmt_date($l['date']) }}</span><span>{{ __('Balance') }} {{ money($l['balance']) }}</span></div>
-                        <div class="mt-0.5 flex items-start justify-between gap-2 text-sm"><span class="min-w-0">{{ $l['desc'] }}</span>
+                        <div class="mt-0.5 flex items-start justify-between gap-2 text-sm"><span class="min-w-0">{{ $l['desc'] }}@if (! empty($l['receipt'])) <a href="{{ Storage::url($l['receipt']) }}" target="_blank" class="text-xs text-brand-700 underline">📎 {{ __('Slip') }}</a>@endif</span>
                             <span class="shrink-0 font-semibold tabular-nums {{ $l['earned'] ? 'text-emerald-700' : 'text-brand-700' }}">{{ $l['earned'] > 0 ? '+'.money($l['earned']) : ($l['earned'] < 0 ? '−'.money(abs($l['earned'])) : '−'.money($l['paid'])) }}</span></div>
                     </div>
                 @endforeach
@@ -99,7 +108,7 @@
                     <thead class="bg-slate-50"><tr><th class="th">{{ __('Date') }}</th><th class="th">{{ __('Details') }}</th><th class="th text-end">{{ __('Earned') }}</th><th class="th text-end">{{ __('Paid') }}</th><th class="th text-end">{{ __('Balance') }}</th></tr></thead>
                     <tbody class="divide-y">
                         @foreach ($lines as $l)
-                            <tr><td class="td">{{ fmt_date($l['date']) }}</td><td class="td whitespace-normal">{{ $l['desc'] }}</td>
+                            <tr><td class="td">{{ fmt_date($l['date']) }}</td><td class="td whitespace-normal">{{ $l['desc'] }}@if (! empty($l['receipt'])) <a href="{{ Storage::url($l['receipt']) }}" target="_blank" class="ms-1 text-xs text-brand-700 underline">📎 {{ __('Slip') }}</a>@endif</td>
                                 <td class="td text-end tabular-nums text-emerald-700">{{ $l['earned'] ? money($l['earned']) : '' }}</td>
                                 <td class="td text-end tabular-nums text-brand-700">{{ $l['paid'] ? money($l['paid']) : '' }}</td>
                                 <td class="td text-end font-medium tabular-nums">{{ money($l['balance']) }}</td></tr>

@@ -19,8 +19,8 @@ Opens shortcuts: New expense · Work entry · Pay worker/advance · New order ·
 - Receipt photos taken offline are uploaded at sync and **read automatically** then.
 
 ## 4. Orders
-*Orders → Add new*: order number (auto), date, client, collection, fabric, quantity, rate (billing), due date, status, attachments (designs/samples).
-- Filter by client, status, collection, fabric, date; export Excel/PDF.
+*Orders → Add new*: order number (auto), date, customer, **brand** (pick from the list — Maria.B., Noore, Parishay…), **collection** (type it), fabric, quantity, rate (billing), due date, status, attachments (designs/samples).
+- Filter by customer, brand, status, collection, fabric, date; export Excel/PDF.
 - Open an order to see **billed amount, material cost, labour cost, cost per piece and profit**, every expense and stitching entry against it, and shortcuts to *Add expense / Work entry / Invoice*.
 
 ## 5. Expenses
@@ -46,6 +46,10 @@ Choose the type at the top:
 - **Advance:** choose type *Advance*. The balance goes negative (“Advance to adjust”) and is deducted from future earnings automatically.
 - Every worker page exports to Excel/PDF.
 
+**Workers who are already owed money (previous due):** when adding or editing a worker enter **Previous due amount** (what you still owe them from before using the app) and the date. It is added to their balance and appears as the first ledger line; payments and advances reduce it. It is not counted as a cost in profit & loss (the work was done earlier). A negative number means the worker owes you.
+
+**Monthly staff:** generate the month's salary under *Monthly salaries*; give advances in *Payments & advances* (type *Advance*). On the worker's page you see *Brought forward · Previous due · Salary & earnings · Paid · Advances given* and the **Pending — balance to pay**. An advance given before the salary shows as *Advance still to adjust* and is deducted automatically once the salary is generated.
+
 ## 7. Customers, invoices, payments
 - *Invoices → Add*: pick an order to pre-fill the line, edit lines, discount/tax. **PDF** button on the invoice page.
 - *Customer payments*: record money received. Pick an **invoice** if the payment is for that invoice; **leave the invoice empty to record an ADVANCE** (money on account).
@@ -56,6 +60,10 @@ Choose the type at the top:
   4. One advance can pay several invoices and one invoice can use several advances; the unused remainder stays available. Each use is recorded (date, amount, which payment) and listed on the invoice and on the customer page. *Remove* on an invoice gives the money back to the advance balance.
   5. An advance that is already applied can't be deleted, or edited to less than what was applied, until it is removed from those invoices.
 - Customer page shows: outstanding receivable (invoices still unpaid), advance held, every payment with where it was applied, and a link to the full ledger report.
+
+**Receipts for customer payments:** when adding or editing a payment (especially an advance), use *Payment receipt* to attach the bank-app screenshot, deposit slip or cheque photo (image or PDF, up to 10 MB). Check it before saving; *Remove* or choose another file to change it. It appears as a Receipt link in *Customer payments* and on the customer's page.
+
+**Payment slips for workers:** in *Payments & advances* (and the quick *Record payment* box on a worker's page) use *Payment receipt* to attach the bank-app screenshot or transfer slip of what you sent — your evidence for an advance. It is shown on the payment's voucher page, as a 📎 *Slip* link in the worker's ledger (the worker sees it too in *My ledger*), and in the list.
 
 ## 8. Inventory
 *Inventory → items* (laces, fabric…) with a low-stock level. *Stock movements*: in (bought) / out (used, optionally for an order). Admins are notified when stock drops to the minimum.
@@ -92,7 +100,7 @@ Under *Money position* (always **today**) pick **This week / This month / This y
 - **Deliveries**: *New delivery* for a batch of an order (partial deliveries are fine). Open it for the **challan PDF**. When all pieces are delivered the order becomes *Delivered*.
 
 ## 15. Buying on credit (vendors)
-In **Expenses**, choose payment mode **On credit**, pick the vendor and (optionally) a due date. It counts as a cost today but no cash leaves. When you pay the vendor, use **Pay a vendor** — payments clear the oldest bill first. The vendor page shows what you owe, unpaid bills and how late they are; you get an alert when a bill is due.
+In **Expenses**, choose payment mode **On credit** (nothing paid yet — *Paid to* is switched off) or **Partly on credit** (enter *Amount paid now* and how; the rest becomes a bill). Pick the vendor and (optionally) a due date. The whole purchase counts as a cost today; cash leaves only for the part paid now. When you pay the vendor, use **Pay a vendor** — payments clear the oldest bill first. The Vendors list shows *Total spent · Paid · Remaining*. When you add a **Vendor payment**, choosing the vendor shows how much is due to them and which bills are unpaid (button: *Fill the full due amount*). Every credit expense shows a **Credit status** — Paid, Partly paid, Unpaid or Overdue — in the Expenses list, on the expense page (bill, paid so far, still to pay) and in the vendor ledger; it turns *Paid* once vendor payments have covered it. The vendor page shows what you owe, unpaid bills and how late they are; you get an alert when a bill is due.
 
 ## 16. Payslips, vouchers & statements (PDF, WhatsApp, email)
 - **Worker page** → *Payslip for the period*: PDF or **Share / WhatsApp**.

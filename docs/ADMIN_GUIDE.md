@@ -20,6 +20,7 @@ Create more roles (e.g. *Supervisor*, *Accountant*) in **Roles & permissions**.
 Typical “worker with balance sheet” role: `work_entries.view/create`, `expenses.create`, `my.ledger`, no `data.all`.
 
 ## Master data (Admin menu)
+- **Brands** — the list behind the *Brand* dropdown on orders (Maria.B., Noore, Parishay, Ayzel, Elaf…). Add new brands here; deactivate one to hide it from new orders (old orders keep it). *Collection* is typed on each order.
 - **Garments & rate card** — Shirt, Pant, Dupatta, 2 Piece, 3 Piece, Kaftan… default stitching rate per piece. Add any garment. Per-worker override on the worker page. Changing a rate affects **new** entries only.
 - **Expense categories** — per type (order/unit/labour/other); add/deactivate (categories in use can't be deleted).
 - **Custom fields** — extra fields on **Unit expenses**: text, number, date, long text, dropdown (comma-separated options), **image upload**; optional *required*; ordering.

@@ -56,7 +56,7 @@ class DocumentController extends Controller
         } elseif ($kind === 'voucher') {
             $p = WorkerPayment::withoutGlobalScopes()->with('worker')->findOrFail($id);
             $day = $p->date->toDateString();
-            $before = round($p->worker->earned(null, $day) - $p->worker->paid(null, $day) + (float) $p->amount, 2); // owed just before this payment
+            $before = round($p->worker->openingDue(null, $day) + $p->worker->earned(null, $day) - $p->worker->paid(null, $day) + (float) $p->amount, 2); // owed just before this payment
             $pdf = Pdf::loadView('documents.voucher', ['p' => $p, 'before' => $before, 'after' => round($before - (float) $p->amount, 2)]);
             $name = 'voucher-'.$p->id.'-'.str($p->worker->name)->slug();
         } else {

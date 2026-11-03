@@ -36,7 +36,8 @@ class VendorController extends CrudController
             [__('Phone'), 'phone'],
             [__('Contact'), 'contact_person'],
             [__('Total spent'), fn ($r) => \App\Models\Expense::withoutGlobalScopes()->where('vendor_id', $r->id)->sum('base_amount'), ['money' => true]],
-            [__('We owe'), fn ($r) => $r->payable(), ['money' => true]],
+            [__('Paid'), fn ($r) => \App\Models\Expense::withoutGlobalScopes()->where('vendor_id', $r->id)->sum('base_amount') - $r->payable(), ['money' => true]],
+            [__('Remaining'), fn ($r) => $r->payable(), ['money' => true]],
         ];
     }
 
@@ -52,10 +53,12 @@ class VendorController extends CrudController
         $this->authorizeAction('view');
         $v = \App\Models\Vendor::findOrFail($id);
 
+        $status = \App\Support\VendorBills::map($v->id);
         $lines = collect();
         foreach ($v->creditBills()->with('order')->get() as $e) {
             $lines->push(['date' => $e->date, 'o' => 0, 'desc' => __('Bill').': '.($e->title ?: ($e->category?->name ?: label($e->type))).($e->order ? ' ('.$e->order->order_no.')' : '')
-                .($e->due_date ? ' · '.__('due').' '.fmt_date($e->due_date) : ''), 'bill' => (float) $e->base_amount, 'paid' => 0.0, 'id' => $e->id]);
+                .($e->payment_mode === 'partial' ? ' · '.__('credit part of :t, :p paid at purchase', ['t' => money($e->base_amount), 'p' => money($e->paidNowBase())]) : '')
+                .($e->due_date ? ' · '.__('due').' '.fmt_date($e->due_date) : ''), 'bill' => $e->creditAmount(), 'paid' => 0.0, 'id' => $e->id, 'status' => $status[$e->id]['status'] ?? null]);
         }
         foreach ($v->payments()->get() as $p) {
             $lines->push(['date' => $p->date, 'o' => 1, 'desc' => __('Payment').' ('.label($p->mode).')'.($p->reference ? " · {$p->reference}" : ''), 'bill' => 0.0, 'paid' => (float) $p->amount, 'id' => $p->id]);

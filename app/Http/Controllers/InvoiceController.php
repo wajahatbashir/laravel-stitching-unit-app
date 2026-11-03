@@ -65,7 +65,8 @@ class InvoiceController extends CrudController
     {
         return [
             'items' => $m ? $m->items->map->only('description', 'qty', 'rate')->all() : [],
-            'orders' => Order::get(['id', 'order_no', 'customer_id', 'qty', 'rate', 'collection_name', 'fabric_name'])->keyBy('id'),
+            'orders' => Order::with('brand')->get()->mapWithKeys(fn ($o) => [$o->id => ['id' => $o->id, 'order_no' => $o->order_no, 'customer_id' => $o->customer_id, 'qty' => $o->qty, 'rate' => $o->rate,
+                'collection_name' => $o->brand_collection, 'fabric_name' => $o->fabric_name]]),
             // unused advance per customer (embedded so it also works offline) + what the invoice has already received
             'advances' => Customer::pluck('id')->mapWithKeys(fn ($id) => [$id => Advances::available($id)])->filter(fn ($v) => $v > 0),
             'paidAlready' => $m ? $m->paid() : 0,

@@ -8,7 +8,7 @@
             <div>
                 <p class="text-xl font-bold">{{ $o->order_no }} <span class="badge {{ badge_class($o->status) }}">{{ label($o->status) }}</span></p>
                 <p class="text-sm text-slate-500"><a class="text-brand-700 underline" href="{{ route('customers.show', $o->customer_id) }}">{{ $o->customer->name }}</a> · {{ fmt_date($o->date) }} @if ($o->due_date) · {{ __('Due') }} {{ fmt_date($o->due_date) }} @endif</p>
-                <p class="mt-1 text-sm">{{ $o->collection_name }} @if ($o->fabric_name) · {{ $o->fabric_name }} @endif · <strong>{{ number_format($o->qty) }}</strong> {{ __('pcs') }}</p>
+                <p class="mt-1 text-sm">{{ $o->brand_collection }} @if ($o->fabric_name) · {{ $o->fabric_name }} @endif · <strong>{{ number_format($o->qty) }}</strong> {{ __('pcs') }}</p>
             </div>
             <div class="flex flex-wrap gap-2">
                 @if ($u->can('orders.edit'))<a href="{{ route('orders.edit', $o) }}" class="btn btn-ghost btn-sm"><x-icon name="pencil" class="h-4 w-4" />{{ __('Edit') }}</a>@endif

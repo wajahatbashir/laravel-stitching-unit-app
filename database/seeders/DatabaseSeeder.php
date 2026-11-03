@@ -69,6 +69,11 @@ class DatabaseSeeder extends Seeder
             GarmentType::firstOrCreate(['name' => $n], ['default_rate' => $r]);
         }
 
+        // Brands shown in the order form's Brand dropdown (admin can add / edit more)
+        foreach (['Maria.B.', 'Noore', 'Parishay', 'Ayzel', 'Elaf'] as $b) {
+            \App\Models\Brand::firstOrCreate(['name' => $b]);
+        }
+
         // Expense categories
         $cats = [
             'order' => ['Laces', 'Organza', 'Shamoz', 'Shameez (Lining)', 'Embellishment', 'Buttons & Zips', 'Packing', 'Thread'],

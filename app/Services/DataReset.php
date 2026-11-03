@@ -24,7 +24,7 @@ class DataReset
     ];
 
     public const KEEP = [
-        'cache', 'cache_locks', 'currencies', 'custom_fields', 'expense_categories', 'failed_jobs', 'garment_types', 'job_batches', 'jobs',
+        'brands', 'cache', 'cache_locks', 'currencies', 'custom_fields', 'expense_categories', 'failed_jobs', 'garment_types', 'job_batches', 'jobs',
         'migrations', 'model_has_permissions', 'model_has_roles', 'notification_settings', 'password_reset_tokens', 'permissions',
         'role_has_permissions', 'roles', 'sessions', 'settings', 'users',
     ];

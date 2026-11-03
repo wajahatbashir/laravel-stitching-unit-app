@@ -127,6 +127,7 @@ Route::middleware(['auth', \App\Http\Middleware\EnsureTwoFactor::class])->group(
         'users' => UserController::class,
         'categories' => ExpenseCategoryController::class,
         'garments' => GarmentTypeController::class,
+        'brands' => \App\Http\Controllers\BrandController::class,
         'custom-fields' => CustomFieldController::class,
         'currencies' => CurrencyController::class,
     ];

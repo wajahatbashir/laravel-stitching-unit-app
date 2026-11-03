@@ -12,7 +12,7 @@
             <div>
                 <span class="badge {{ badge_class($e->type) }}">{{ label($e->type) }}</span>
                 <p class="mt-1 text-lg font-bold">{{ $e->title ?: ($e->category?->name ?? __('Expense')) }}</p>
-                <p class="text-sm text-slate-500">{{ fmt_date($e->date) }} · {{ label($e->payment_mode) }}</p>
+                <p class="text-sm text-slate-500">{{ fmt_date($e->date) }} · {{ $e->payment_mode === 'partial' ? __('Partly on credit') : label($e->payment_mode) }}</p>
             </div>
             <div class="text-end">
                 <p class="text-2xl font-bold tabular-nums">{{ money($e->base_amount) }}</p>
@@ -26,6 +26,11 @@
             @if ($e->asset)<div><dt class="text-xs text-slate-400">{{ __('Asset') }}</dt><dd class="text-sm"><a class="text-brand-700 underline" href="{{ route('assets.show', $e->asset) }}">{{ $e->asset->name }}</a></dd></div>@endif
             {!! $row(__('Vendor'), $e->vendor?->name) !!}
             {!! $row(__('Paid to'), $e->payee) !!}
+            @if ($e->payment_mode === 'partial')
+                {!! $row(__('Paid now').' ('.label($e->paid_via).')', money($e->paidNowBase())) !!}
+                {!! $row(__('On credit (we owe)'), money($e->creditAmount())) !!}
+            @endif
+            @if ($e->due_date){!! $row(__('Bill due date'), fmt_date($e->due_date)) !!}@endif
             {!! $row(__('Quantity'), $e->qty !== null ? (float) $e->qty : null) !!}
             {!! $row(__('Rate'), $e->rate !== null ? number_format($e->rate, 2) : null) !!}
             @foreach ($custom as $cf)
@@ -36,6 +41,21 @@
                 @endif
             @endforeach
         </dl>
+        @if ($bill)
+            <div class="mt-4 rounded-xl p-3 ring-1 {{ $bill['status'] === 'paid' ? 'bg-emerald-50 ring-emerald-200' : ($bill['status'] === 'partial' ? 'bg-amber-50 ring-amber-200' : 'bg-rose-50 ring-rose-200') }}">
+                <div class="flex flex-wrap items-center justify-between gap-2">
+                    <p class="text-sm font-semibold">{{ __('Vendor bill') }} <span class="badge {{ badge_class($bill['status']) }}">{{ \App\Support\VendorBills::label($bill['status']) }}</span></p>
+                    @if ($e->vendor)<a href="{{ route('vendors.show', $e->vendor) }}" class="text-sm text-brand-700 underline">{{ __('Vendor ledger') }}</a>@endif
+                </div>
+                <dl class="mt-2 grid grid-cols-2 gap-2 text-sm md:grid-cols-4">
+                    <div><dt class="text-xs text-slate-500">{{ __('Bill (credit part)') }}</dt><dd class="tabular-nums">{{ money($bill['credit']) }}</dd></div>
+                    <div><dt class="text-xs text-slate-500">{{ __('Paid to the vendor') }}</dt><dd class="tabular-nums">{{ money($bill['paid']) }}</dd></div>
+                    <div><dt class="text-xs text-slate-500">{{ __('Still to pay') }}</dt><dd class="font-semibold tabular-nums">{{ money($bill['left']) }}</dd></div>
+                    <div><dt class="text-xs text-slate-500">{{ __('Due date') }}</dt><dd>{{ fmt_date($bill['due']) }}</dd></div>
+                </dl>
+                <p class="mt-1 text-xs text-slate-500">{{ __('Vendor payments clear the oldest bills first.') }}</p>
+            </div>
+        @endif
         @if ($e->notes)<p class="mt-4 rounded-xl bg-slate-50 p-3 text-sm text-slate-600">{{ $e->notes }}</p>@endif
 
         <div class="mt-4 flex flex-wrap gap-2">

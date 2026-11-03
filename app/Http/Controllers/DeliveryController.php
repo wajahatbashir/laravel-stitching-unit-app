@@ -51,7 +51,7 @@ class DeliveryController extends CrudController
             [__('Challan'), 'challan_no'],
             [__('Date'), 'date'],
             [__('Order'), 'order.order_no'],
-            [__('Client'), 'order.customer.name'],
+            [__('Customer'), 'order.customer.name'],
             [__('Pieces'), 'qty'],
             [__('Vehicle'), 'vehicle'],
             [__('Received by'), 'received_by'],

@@ -12,8 +12,11 @@
     @endif
 
     <div class="card p-4 md:p-6">
+        {{-- optional block above the fields (e.g. the payment receipt box); fields flagged 'custom_ui' are drawn there instead of in the grid --}}
+        @includeIf($route.'._top', ['model' => $model, 'extra' => $extra])
         <div class="grid gap-4 md:grid-cols-2">
             @foreach ($fields as $f)
+                @continue(! empty($f['custom_ui']))
                 <x-field :f="$f" :model="$model" />
             @endforeach
         </div>

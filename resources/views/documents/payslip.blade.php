@@ -22,9 +22,11 @@
 
 <table style="width:55%;margin-left:45%">
     <tr><td>Brought forward</td><td class="r">{{ number_format($opening, 2) }}</td></tr>
-    <tr><td>Earned (net of deductions)</td><td class="r">{{ number_format($earned, 2) }}</td></tr>
-    <tr><td>Paid / advances</td><td class="r">{{ number_format($paid, 2) }}</td></tr>
-    <tr><td><strong>{{ $closing < 0 ? 'Advance to adjust' : 'Balance to pay' }}</strong></td><td class="r big">{{ money(abs($closing)) }}</td></tr>
+    @if ($prevDue != 0)<tr><td>Previous due (from before)</td><td class="r">{{ number_format($prevDue, 2) }}</td></tr>@endif
+    <tr><td>{{ $w->type === 'salaried' ? 'Salary & earnings (net of deductions)' : 'Earned (net of deductions)' }}</td><td class="r">{{ number_format($earned, 2) }}</td></tr>
+    <tr><td>Paid</td><td class="r">{{ number_format($payments, 2) }}</td></tr>
+    @if ($advances != 0)<tr><td>Advances given</td><td class="r">{{ number_format($advances, 2) }}</td></tr>@endif
+    <tr><td><strong>{{ $closing < 0 ? 'Advance to adjust' : 'Pending — balance to pay' }}</strong></td><td class="r big">{{ money(abs($closing)) }}</td></tr>
 </table>
 <table class="sig"><tr><td><span>Prepared by</span></td><td><span>Received by {{ $w->name }}</span></td></tr></table>
 </body></html>

@@ -9,6 +9,7 @@ use App\Services\Notifier;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class CustomerPaymentController extends CrudController
 {
@@ -32,6 +33,7 @@ class CustomerPaymentController extends CrudController
             $this->f('amount', 'Amount received', 'number', ['required' => true, 'step' => '0.01', 'rules' => 'numeric|min:0.01']),
             $this->f('mode', 'Received via', 'select', ['required' => true, 'default' => 'bank', 'options' => ['cash' => __('Cash'), 'bank' => __('Bank')]]),
             $this->f('reference', 'Reference / cheque no.'),
+            $this->f('receipt', 'Payment receipt (bank app screenshot / photo)', 'file', ['store_as' => 'receipt_path', 'custom_ui' => true, 'rules' => 'nullable|file|mimes:jpg,jpeg,png,webp,pdf|max:10240']),
             $this->f('notes', 'Notes', 'textarea', ['span' => 2]),
         ];
     }
@@ -55,11 +57,25 @@ class CustomerPaymentController extends CrudController
             [__('Applied to'), fn ($r) => $r->invoice_id ? ($r->invoice?->number ?: '—') : ($r->allocations->pluck('invoice.number')->filter()->unique()->implode(', ') ?: '—')],
             [__('Advance unused'), fn ($r) => $r->invoice_id ? '—' : money($r->unapplied())],
             [__('Reference'), 'reference'],
+            [__('Receipt'), fn ($r) => $r->receipt_path ? __('View') : '—', ['url' => fn ($r) => $r->receipt_path ? Storage::url($r->receipt_path) : null]],
         ];
     }
 
+    private ?string $staleReceipt = null;
+
     protected function prepare(array $data, ?Model $m, Request $r): array
     {
+        // replacing or removing the saved receipt → the old file is deleted after a successful save (see saved())
+        $this->staleReceipt = null;
+        $old = $m?->receipt_path;
+        $removed = $old && empty($data['receipt_path']) && $r->boolean('remove_receipt');
+        if ($old && (! empty($data['receipt_path']) || $removed)) {
+            $this->staleReceipt = $old;
+        }
+        if ($removed) {
+            $data['receipt_path'] = null;
+        }
+
         // an advance that is already applied to invoices must stay consistent
         $applied = $m && ! $m->invoice_id ? $m->applied() : 0;
         if ($applied > 0) {
@@ -81,6 +97,10 @@ class CustomerPaymentController extends CrudController
 
     protected function saved(Model $m, Request $r, bool $created): void
     {
+        if ($this->staleReceipt) {
+            Storage::disk('public')->delete($this->staleReceipt);
+            $this->staleReceipt = null;
+        }
         if ($created) {
             Notifier::send('customer_payment', __('Received :a from :c', ['a' => money($m->amount), 'c' => $m->customer->name]), fmt_date($m->date));
         }

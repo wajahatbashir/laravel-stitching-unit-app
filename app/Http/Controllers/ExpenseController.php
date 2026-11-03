@@ -54,9 +54,12 @@ class ExpenseController extends CrudController
             $this->f('amount', 'Amount', 'number', ['step' => '0.01', 'rules' => 'nullable|numeric|min:0']),
             $this->f('currency_id', 'Currency', 'select', ['options' => Currency::where('is_active', true)->pluck('code', 'id')->all(), 'default' => $base?->id]),
             $this->f('payment_mode', 'Paid via', 'select', ['required' => true, 'default' => 'cash',
-                'options' => ['cash' => __('Cash'), 'bank' => __('Bank / app'), 'other' => __('Other'), 'credit' => __('On credit — pay the vendor later')],
-                'rules' => 'in:cash,bank,other,credit']),
-            $this->f('due_date', 'Bill due date (for credit purchases)', 'date', ['rules' => 'nullable|date', 'help' => __('Only for "On credit". When must this vendor be paid?')]),
+                'options' => ['cash' => __('Cash'), 'bank' => __('Bank / app'), 'other' => __('Other'), 'credit' => __('On credit — pay the vendor later'),
+                    'partial' => __('Partly on credit — part paid now, rest later')],
+                'rules' => 'in:cash,bank,other,credit,partial']),
+            $this->f('paid_now', 'Amount paid now', 'number', ['step' => '0.01', 'rules' => 'nullable|numeric|min:0']),
+            $this->f('paid_via', 'Paid now via', 'select', ['default' => 'cash', 'options' => ['cash' => __('Cash'), 'bank' => __('Bank / app'), 'other' => __('Other')], 'rules' => 'nullable|in:cash,bank,other']),
+            $this->f('due_date', 'Bill due date (for the credit part)', 'date', ['rules' => 'nullable|date', 'help' => __('Only for credit purchases. When must this vendor be paid?')]),
             $this->f('receipt', 'Payment receipt', 'file', ['store_as' => 'receipt_path', 'rules' => 'nullable|file|mimes:jpg,jpeg,png,webp,pdf|max:10240']),
             $this->f('ocr_text', 'ocr', 'hidden'),
             $this->f('notes', 'Notes', 'textarea', ['span' => 2]),
@@ -70,7 +73,7 @@ class ExpenseController extends CrudController
             $this->flt('category_id', 'Category', ExpenseCategory::orderBy('name')->pluck('name', 'id')->all()),
             $this->flt('order_id', 'Order', opts(Order::class, 'order_no')),
             $this->flt('vendor_id', 'Vendor', opts(Vendor::class)),
-            $this->flt('payment_mode', 'Paid via', ['cash' => __('Cash'), 'bank' => __('Bank'), 'other' => __('Other'), 'credit' => __('On credit')]),
+            $this->flt('payment_mode', 'Paid via', ['cash' => __('Cash'), 'bank' => __('Bank'), 'other' => __('Other'), 'credit' => __('On credit'), 'partial' => __('Partly on credit')]),
         ];
     }
 
@@ -82,8 +85,10 @@ class ExpenseController extends CrudController
             [__('Category'), 'category.name'],
             [__('Order'), 'order.order_no'],
             [__('Details'), fn ($r) => $r->title ?: ($r->payee ?: '—')],
-            [__('Via'), 'payment_mode', ['label' => true]],
+            [__('Via'), fn ($r) => $r->payment_mode === 'partial' ? __('Partly on credit') : label($r->payment_mode)],
             [__('Amount'), 'base_amount', ['money' => true]],
+            [__('Credit status'), fn ($r) => (($b = $this->billMap()[$r->id] ?? null)) ? \App\Support\VendorBills::label($b['status']) : '—',
+                ['badge' => true, 'badge_key' => fn ($r) => $this->billMap()[$r->id]['status'] ?? '']],
             [__('Receipt'), fn ($r) => $r->receipt_path ? __('View') : '—', ['url' => fn ($r) => $r->receipt_path ? Storage::url($r->receipt_path) : null]],
         ];
     }
@@ -105,12 +110,20 @@ class ExpenseController extends CrudController
     protected function prepare(array $data, ?Model $m, Request $r): array
     {
         $errors = [];
-        if ($data['payment_mode'] === 'credit') {
+        $mode = $data['payment_mode'];
+        if (in_array($mode, Expense::CREDIT_MODES, true)) {
             if (empty($data['vendor_id'])) {
                 $errors['vendor_id'] = __('Choose the vendor you bought from — a credit purchase is a bill you owe them.');
             }
+            if ($mode === 'credit') {
+                $data['payee'] = null; // nobody has been paid yet
+            }
         } else {
             $data['due_date'] = null; // a due date only makes sense for credit bills
+        }
+        if ($mode !== 'partial') {
+            $data['paid_now'] = null;
+            $data['paid_via'] = null;
         }
         if ($data['type'] === 'order' && empty($data['order_id'])) {
             $errors['order_id'] = __('Select the order this expense belongs to.');
@@ -144,6 +157,13 @@ class ExpenseController extends CrudController
         }
         if (empty($data['amount'])) {
             $errors['amount'] = __('Amount is required (could not be read from the receipt).');
+        }
+        if ($mode === 'partial') {
+            $paidNow = (float) ($data['paid_now'] ?? 0);
+            if ($paidNow <= 0 || (! empty($data['amount']) && $paidNow >= (float) $data['amount'])) {
+                $errors['paid_now'] = __('Enter how much was paid now: more than 0 and less than the total amount. (Fully paid → choose Cash or Bank; nothing paid → On credit.)');
+            }
+            $data['paid_via'] = $data['paid_via'] ?: 'cash';
         }
         if ($errors) {
             throw ValidationException::withMessages($errors);
@@ -180,6 +200,14 @@ class ExpenseController extends CrudController
 
     private ?string $staleReceipt = null;
 
+    private ?array $bills = null;
+
+    /** expense id → payment status of its credit bill (computed once per request). */
+    private function billMap(): array
+    {
+        return $this->bills ??= \App\Support\VendorBills::map();
+    }
+
     /** Read-only detail page with a large receipt preview. */
     public function show($id)
     {
@@ -188,6 +216,7 @@ class ExpenseController extends CrudController
 
         return view('expenses.show', [
             'e' => $e,
+            'bill' => $e->vendor_id ? (\App\Support\VendorBills::map($e->vendor_id)[$e->id] ?? null) : null,
             'custom' => CustomField::where('entity', 'unit_expense')->orderBy('sort')->get(),
         ]);
     }

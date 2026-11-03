@@ -16,6 +16,13 @@ class Order extends Model
     protected $casts = ['date' => 'date', 'due_date' => 'date', 'amount' => 'decimal:2', 'rate' => 'decimal:2'];
 
     public function customer() { return $this->belongsTo(Customer::class); }
+    public function brand() { return $this->belongsTo(Brand::class); }
+
+    /** "Maria.B. · Eid Luxe" — brand and collection on one line, whichever are filled. */
+    public function getBrandCollectionAttribute(): string
+    {
+        return collect([$this->brand?->name, $this->collection_name])->filter()->implode(' · ');
+    }
     public function expenses() { return $this->hasMany(Expense::class); }
     public function workEntries() { return $this->hasMany(WorkEntry::class); }
     public function invoices() { return $this->hasMany(Invoice::class); }

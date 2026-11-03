@@ -18,5 +18,15 @@ class WorkerPayment extends Model
     protected $guarded = [];
     protected $casts = ['date' => 'date', 'period_from' => 'date', 'period_to' => 'date', 'amount' => 'decimal:2'];
 
+    protected static function booted(): void
+    {
+        // deleting a payment also deletes its payment slip
+        static::deleted(function (self $p) {
+            if ($p->receipt_path) {
+                \Illuminate\Support\Facades\Storage::disk('public')->delete($p->receipt_path);
+            }
+        });
+    }
+
     public function worker() { return $this->belongsTo(Worker::class); }
 }

@@ -16,7 +16,7 @@ class Ledger
 {
     public static function build(Worker $w, ?string $from, ?string $to): array
     {
-        $opening = $from ? round($w->earned(null, self::dayBefore($from)) - $w->paid(null, self::dayBefore($from)), 2) : 0.0;
+        $opening = $from ? round($w->openingDue(null, self::dayBefore($from)) + $w->earned(null, self::dayBefore($from)) - $w->paid(null, self::dayBefore($from)), 2) : 0.0;
 
         $lines = collect();
         $we = $w->workEntries()->with('garmentType', 'order');
@@ -33,6 +33,10 @@ class Ledger
             $lines->push(['date' => $e->period_month, 'kind' => 'salary', 'desc' => __('Salary').' '.$e->period_month->format('M Y'),
                 'earned' => $e->net(), 'paid' => 0.0, 'o' => 0]);
         }
+        // previous due entered on the worker, when its date falls in this period
+        if (abs($pd = $w->openingDue($from, $to)) > 0.004) {
+            $lines->push(['date' => $w->opening_date ?? $w->created_at, 'kind' => 'opening', 'desc' => __('Previous due (brought forward)'), 'earned' => $pd, 'paid' => 0.0, 'o' => -1]);
+        }
         $ae = $w->adjustments();
         if ($from) { $ae->whereDate('date', '>=', $from); }
         if ($to) { $ae->whereDate('date', '<=', $to); }
@@ -42,7 +46,7 @@ class Ledger
         }
         foreach ($pe->get() as $p) {
             $lines->push(['date' => $p->date, 'kind' => $p->type, 'desc' => label($p->type).' ('.label($p->mode).')'.($p->notes ? " — {$p->notes}" : ''),
-                'earned' => 0.0, 'paid' => (float) $p->amount, 'o' => 2]);
+                'earned' => 0.0, 'paid' => (float) $p->amount, 'o' => 2, 'receipt' => $p->receipt_path]);
         }
 
         $bal = $opening;
@@ -53,16 +57,19 @@ class Ledger
             return $l;
         });
 
-        $earned = (float) $lines->sum('earned');
+        $prevDue = (float) $lines->where('kind', 'opening')->sum('earned');
+        $earned = (float) $lines->where('kind', '!=', 'opening')->sum('earned');      // work + salary ± deductions/bonuses
         $paid = (float) $lines->sum('paid');
-        $closing = round($opening + $earned - $paid, 2);
-        $due = round($opening + $earned, 2);
+        $advances = (float) $lines->where('kind', 'advance')->sum('paid');
+        $payments = round($paid - $advances, 2);
+        $closing = round($opening + $prevDue + $earned - $paid, 2);
+        $due = round($opening + $prevDue + $earned, 2);
         $status = $closing <= 0 ? 'paid' : ($paid > 0 ? 'partial' : 'pending');
         if ($due <= 0 && $paid == 0) {
             $status = 'pending';
         }
 
-        return compact('opening', 'earned', 'paid', 'closing', 'status', 'lines');
+        return compact('opening', 'prevDue', 'earned', 'paid', 'payments', 'advances', 'closing', 'status', 'lines');
     }
 
     private static function dayBefore(string $d): string
@@ -79,7 +86,7 @@ class Ledger
         if ($fmt = $r->query('export')) {
             $head = [__('Date'), __('Details'), __('Earned'), __('Paid'), __('Balance')];
             $rows = $l['lines']->map(fn ($x) => [fmt_date($x['date']), $x['desc'], $x['earned'] ?: '', $x['paid'] ?: '', $x['balance']])->all();
-            $totals = [__('Opening') => $l['opening'], __('Earned') => $l['earned'], __('Paid') => $l['paid'], __('Closing balance') => $l['closing']];
+            $totals = [__('Opening') => $l['opening'], __('Previous due') => $l['prevDue'], __('Earned') => $l['earned'], __('Paid') => $l['payments'], __('Advances') => $l['advances'], __('Pending balance') => $l['closing']];
 
             return TableExport::respond($w->name.' ledger', $head, $rows, $fmt, $totals);
         }

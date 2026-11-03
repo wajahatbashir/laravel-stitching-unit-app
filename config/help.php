@@ -16,9 +16,9 @@ return [
 
     'orders' => ['group' => 'Business', 'title' => 'Orders', 'route' => 'orders.index', 'perm' => 'orders.view',
         'purpose' => 'Bulk stitching jobs from your clients (brands): what was ordered, by when, and what it cost.',
-        'how' => ['Add an order: client, collection / brand, fabric, quantity, rate, due date and photos.',
+        'how' => ['Add an order: customer, brand (pick from the list), collection (type it), fabric, quantity, rate, due date and photos.',
             'Open an order to see costs (materials + labour), production progress, deliveries and profit.',
-            'Use Filters to find orders by client, collection, fabric, status or date.'],
+            'Use Filters to find orders by customer, brand, collection, fabric, status or date.'],
         'tips' => ['Expenses and work entries linked to an order are what make its profit figure correct.']],
 
     'customers' => ['group' => 'Business', 'title' => 'Customers', 'route' => 'customers.index', 'perm' => 'customers.view',
@@ -35,7 +35,7 @@ return [
 
     'customer-payments' => ['group' => 'Business', 'title' => 'Customer payments', 'route' => 'customer-payments.index', 'perm' => 'customer_payments.view',
         'purpose' => 'Money received from customers, either against an invoice or as an advance.',
-        'how' => ['Add a payment: customer, amount, cash or bank. Choose an invoice, or leave it empty to keep it as an advance.',
+        'how' => ['Add a payment: customer, amount, cash or bank. Choose an invoice, or leave it empty to keep it as an advance.', 'Attach the receipt (bank screenshot, deposit slip or cheque photo) so the proof is kept with the payment.',
             'Apply an advance to invoices later from the invoice page.'],
         'tips' => ['Unused advances are shown as money you hold for the customer, and count as a liability on the balance sheet.']],
 
@@ -63,13 +63,13 @@ return [
     'expenses' => ['group' => 'Expenses', 'title' => 'Expenses', 'route' => 'expenses.index', 'perm' => 'expenses.view',
         'purpose' => 'Every rupee spent: order materials, unit purchases, labour extras and other costs.',
         'how' => ['Choose the type: Order, Unit, Labour or Other.', 'Upload a payment receipt and the amount, date and payee are read for you; always check them.',
-            'Pick On credit to buy from a vendor now and pay later (vendor required).'],
+            'Pick On credit to buy now and pay later, or Partly on credit to pay some now and the rest later (vendor required; Paid to is switched off only for fully-on-credit).'],
         'tips' => ['Order expenses need an order so profit per order is right.']],
 
     'vendors' => ['group' => 'Expenses', 'title' => 'Vendors', 'route' => 'vendors.index', 'perm' => 'vendors.view',
         'purpose' => 'Suppliers (lace, fabric, etc.) and what you owe each of them.',
         'how' => ['Add a vendor.', 'Open it for the ledger, unpaid bills and how late each one is.'],
-        'tips' => ['The We owe column totals every unpaid credit bill.']],
+        'tips' => ['Remaining is what you still owe: every unpaid credit bill, whole or partial.']],
 
     'vendor-payments' => ['group' => 'Expenses', 'title' => 'Vendor payments', 'route' => 'vendor-payments.index', 'perm' => 'vendor_payments.view',
         'purpose' => 'Payments you make against credit purchases.',
@@ -88,8 +88,8 @@ return [
 
     'workers' => ['group' => 'Labour', 'title' => 'Workers & Staff', 'route' => 'workers.index', 'perm' => 'workers.view',
         'purpose' => 'Freelancers paid per piece and salaried staff, each with a running balance.',
-        'how' => ['Add a worker, choose type and payment cycle, and set piece rates per garment.',
-            'Open a worker for the ledger: earned, paid, balance. Unpaid balance carries forward.',
+        'how' => ['Add a worker, choose type and payment cycle, and set piece rates per garment.', 'If you already owe them money from before the app, enter it as Previous due amount (with the date); it is added to their balance and shown as a Previous due line in the ledger.',
+            'Open a worker for the ledger: brought forward, previous due, earned, paid, advances and the pending balance. Unpaid balance carries forward.',
             'Record a payment or advance from there; share a payslip as PDF or WhatsApp.',
             'Link a Login account so the worker can see My ledger.'],
         'tips' => ['A negative balance is an advance that will be adjusted against future earnings.']],
@@ -106,7 +106,7 @@ return [
 
     'worker-payments' => ['group' => 'Labour', 'title' => 'Payments & advances', 'route' => 'worker-payments.index', 'perm' => 'worker_payments.view',
         'purpose' => 'Cash or bank payments and advances to workers.',
-        'how' => ['Add a payment or advance; partial payments are fine.', 'Open one (eye icon) for the payment voucher: PDF or WhatsApp.'],
+        'how' => ['Add a payment or advance; partial payments are fine.', 'Attach the payment slip (bank screenshot or transfer slip) as evidence; it is shown on the voucher page and the worker\'s ledger.', 'Open one (eye icon) for the payment voucher: PDF or WhatsApp.'],
         'tips' => []],
 
     'worker-adjustments' => ['group' => 'Labour', 'title' => 'Deductions & bonuses', 'route' => 'worker-adjustments.index', 'perm' => 'worker_payments.view',
@@ -153,6 +153,10 @@ return [
     'categories' => ['group' => 'Admin', 'title' => 'Expense categories', 'route' => 'categories.index', 'perm' => 'master.view',
         'purpose' => 'The category lists used on expenses, per type.',
         'how' => ['Add or deactivate categories. One in use cannot be deleted.'], 'tips' => []],
+
+    'brands' => ['group' => 'Admin', 'title' => 'Brands', 'route' => 'brands.index', 'perm' => 'master.view',
+        'purpose' => 'The list of brands (Maria.B., Noore, Parishay…) offered in the order form.',
+        'how' => ['Add a brand once; it then appears in the Brand dropdown of every order.', 'Deactivate a brand to hide it from new orders; old orders keep it.'], 'tips' => ['Collection is typed on each order; only the Brand comes from this list.']],
 
     'garments' => ['group' => 'Admin', 'title' => 'Garments & rate card', 'route' => 'garments.index', 'perm' => 'master.view',
         'purpose' => 'Garment types and the default stitching rate per piece.',

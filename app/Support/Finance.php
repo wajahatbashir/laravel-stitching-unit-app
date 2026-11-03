@@ -30,7 +30,9 @@ class Finance
             $spent = (float) $d(Investment::withoutGlobalScopes()->where('type', 'withdrawal')->where('mode', $mode))->sum('amount')
                 + (float) $d(WorkerPayment::withoutGlobalScopes()->where('mode', $mode))->sum('amount')
                 + (float) $d(VendorPayment::withoutGlobalScopes()->where('mode', $mode))->sum('amount')
-                + (float) $d(Expense::withoutGlobalScopes()->whereIn('payment_mode', $mode === 'cash' ? ['cash', 'other'] : ['bank']))->sum('base_amount');
+                + (float) $d(Expense::withoutGlobalScopes()->whereIn('payment_mode', $mode === 'cash' ? ['cash', 'other'] : ['bank']))->sum('base_amount')
+                // the part paid at purchase of a "partly on credit" expense
+                + (float) $d(Expense::withoutGlobalScopes()->where('payment_mode', 'partial')->whereIn('paid_via', $mode === 'cash' ? ['cash', 'other'] : ['bank']))->sum(\DB::raw('paid_now * exchange_rate'));
             $out[$mode] = ['in' => $in, 'out' => $spent, 'balance' => round($in - $spent, 2)];
         }
 
@@ -49,7 +51,8 @@ class Finance
     /** What we owe vendors for credit purchases, net of payments made (a liability). */
     public static function vendorPayables(): float
     {
-        $bills = (float) Expense::withoutGlobalScopes()->where('payment_mode', 'credit')->sum('base_amount');
+        $bills = (float) Expense::withoutGlobalScopes()->whereIn('payment_mode', Expense::CREDIT_MODES)
+            ->sum(\DB::raw("CASE WHEN payment_mode = 'partial' THEN base_amount - COALESCE(paid_now, 0) * exchange_rate ELSE base_amount END"));
 
         return round($bills - (float) \App\Models\VendorPayment::sum('amount'), 2);
     }

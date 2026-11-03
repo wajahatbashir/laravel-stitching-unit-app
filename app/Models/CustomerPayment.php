@@ -18,6 +18,16 @@ class CustomerPayment extends Model
     protected $guarded = [];
     protected $casts = ['date' => 'date', 'amount' => 'decimal:2'];
 
+    protected static function booted(): void
+    {
+        // deleting a payment also deletes its receipt file
+        static::deleted(function (self $p) {
+            if ($p->receipt_path) {
+                \Illuminate\Support\Facades\Storage::disk('public')->delete($p->receipt_path);
+            }
+        });
+    }
+
     public function customer() { return $this->belongsTo(Customer::class); }
     public function invoice() { return $this->belongsTo(Invoice::class); }
     public function allocations() { return $this->hasMany(PaymentAllocation::class); }

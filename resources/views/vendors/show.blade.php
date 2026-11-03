@@ -40,7 +40,7 @@
         <div class="border-b border-slate-200 px-4 py-3 font-semibold">{{ __('Ledger') }}</div>
         @forelse ($lines as $l)
             <div class="flex items-center justify-between gap-3 border-b border-slate-100 px-4 py-2.5 text-sm last:border-0">
-                <div class="min-w-0"><p class="truncate">{{ $l['desc'] }}</p><p class="text-xs text-slate-400">{{ fmt_date($l['date']) }}</p></div>
+                <div class="min-w-0"><p class="truncate">{{ $l['desc'] }}@if (! empty($l['status'])) <span class="badge {{ badge_class($l['status']) }}">{{ \App\Support\VendorBills::label($l['status']) }}</span>@endif</p><p class="text-xs text-slate-400">{{ fmt_date($l['date']) }}</p></div>
                 <div class="shrink-0 text-end"><p class="font-semibold tabular-nums {{ $l['bill'] ? 'text-rose-700' : 'text-emerald-700' }}">{{ $l['bill'] ? '+'.money($l['bill']) : '−'.money($l['paid']) }}</p><p class="text-xs text-slate-400 tabular-nums">{{ money($l['balance']) }}</p></div>
             </div>
         @empty

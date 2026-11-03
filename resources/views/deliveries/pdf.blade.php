@@ -21,13 +21,13 @@
 <div class="box" style="margin-top:16px">
     <strong>Deliver to:</strong> {{ $d->order->customer->name }}<br>
     @if ($d->order->customer->address)<span class="muted">{{ $d->order->customer->address }}</span><br>@endif
-    <strong>Order:</strong> {{ $d->order->order_no }}@if ($d->order->collection_name) — {{ $d->order->collection_name }}@endif @if ($d->order->fabric_name) ({{ $d->order->fabric_name }})@endif
+    <strong>Order:</strong> {{ $d->order->order_no }}@if ($d->order->brand_collection) — {{ $d->order->brand_collection }}@endif @if ($d->order->fabric_name) ({{ $d->order->fabric_name }})@endif
     @if ($d->vehicle)<br><strong>Vehicle / rider:</strong> {{ $d->vehicle }}@endif
 </div>
 
 <table>
     <tr><th>Description</th><th class="r">Pieces</th></tr>
-    <tr><td>Stitched garments — {{ $d->order->collection_name ?: 'order '.$d->order->order_no }}</td><td class="r"><strong>{{ number_format($d->qty) }}</strong></td></tr>
+    <tr><td>Stitched garments — {{ $d->order->brand_collection ?: 'order '.$d->order->order_no }}</td><td class="r"><strong>{{ number_format($d->qty) }}</strong></td></tr>
 </table>
 <table style="width:55%;margin-left:45%">
     <tr><td>Order quantity</td><td class="r">{{ number_format($d->order->qty) }}</td></tr>

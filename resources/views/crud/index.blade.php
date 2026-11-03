@@ -23,7 +23,7 @@
             return '<a href="'.e($u).'" '.($img ? 'data-lightbox' : 'target="_blank"').' class="font-medium text-brand-700 underline">'.e($t).'</a>';
         }
         if (! empty($o['badge']) && $t !== '—') {
-            return '<span class="badge '.badge_class(is_string($col[1]) ? data_get($row, $col[1]) : ($col[1])($row)).'">'.e($t).'</span>';
+            return '<span class="badge '.badge_class(! empty($o['badge_key']) ? ($o['badge_key'])($row) : (is_string($col[1]) ? data_get($row, $col[1]) : ($col[1])($row))).'">'.e($t).'</span>';
         }
         return e($t);
     };
@@ -110,7 +110,7 @@
     <div class="card hidden max-h-[70vh] overflow-auto md:block">
         <table class="min-w-full divide-y divide-slate-200">
             <thead class="sticky top-0 z-10 bg-slate-50 shadow-[0_1px_0_var(--color-slate-200)]"><tr>
-                @foreach ($columns as $col)<th class="th">{{ $col[0] }}</th>@endforeach
+                @foreach ($columns as $col)<th class="th {{ ! empty(($col[2] ?? [])['money']) ? 'text-end' : '' }}">{{ $col[0] }}</th>@endforeach
                 <th class="th text-end">{{ __('Actions') }}</th>
             </tr></thead>
             <tbody class="divide-y divide-slate-100">

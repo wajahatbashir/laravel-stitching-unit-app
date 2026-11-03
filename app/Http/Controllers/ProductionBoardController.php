@@ -14,7 +14,7 @@ class ProductionBoardController extends Controller
     {
         abort_unless($r->user()->can('production.view') || $r->user()->can('orders.view'), 403);
 
-        $orders = Order::with('customer')
+        $orders = Order::with('customer', 'brand')
             ->whereNotIn('status', $r->boolean('all') ? ['cancelled'] : ['cancelled', 'delivered'])
             ->when($r->customer_id, fn ($q, $v) => $q->where('customer_id', $v))
             ->orderBy('due_date')->orderBy('id')->get();

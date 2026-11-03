@@ -15,6 +15,18 @@
             <div><dt class="text-xs text-slate-400">{{ __('Period') }}</dt><dd>{{ $p->period_from || $p->period_to ? fmt_date($p->period_from).' – '.fmt_date($p->period_to) : '—' }}</dd></div>
         </dl>
         @if ($p->notes)<p class="mt-4 rounded-xl bg-slate-50 p-3 text-sm text-slate-600">{{ $p->notes }}</p>@endif
+        @if ($p->receipt_path)
+            @php $slipPdf = str_ends_with(strtolower($p->receipt_path), '.pdf'); @endphp
+            <div class="mt-4 rounded-xl bg-slate-50 p-3 ring-1 ring-slate-200">
+                <p class="mb-2 text-sm font-semibold">{{ __('Payment slip (evidence)') }}</p>
+                @if ($slipPdf)
+                    <a href="{{ Storage::url($p->receipt_path) }}" target="_blank" class="btn btn-ghost btn-sm">📄 {{ __('Open PDF') }}</a>
+                @else
+                    <a href="{{ Storage::url($p->receipt_path) }}" data-lightbox><img src="{{ Storage::url($p->receipt_path) }}" alt="{{ __('Payment slip') }}" class="max-h-96 rounded-lg ring-1 ring-slate-200"></a>
+                    <a href="{{ Storage::url($p->receipt_path) }}" target="_blank" class="mt-2 inline-block text-xs text-brand-700 underline">{{ __('Open full size') }}</a>
+                @endif
+            </div>
+        @endif
         <div class="mt-4 border-t pt-3">
             @include('documents._share', ['kind' => 'voucher', 'id' => $p->id, 'phone' => $p->worker->phone,
                 'text' => __(':b — payment voucher PV-:n: :a paid to :w on :d.', ['b' => biz('business_name'), 'n' => str_pad($p->id, 5, '0', STR_PAD_LEFT), 'a' => money($p->amount), 'w' => $p->worker->name, 'd' => fmt_date($p->date)])])

@@ -32,6 +32,27 @@ class VendorPaymentController extends CrudController
         ];
     }
 
+    /** What each vendor is owed, so the form can show the due amount as soon as a vendor is chosen. */
+    protected function formData(?Model $m): array
+    {
+        $dues = [];
+        foreach (Vendor::orderBy('name')->get() as $v) {
+            $dues[$v->id] = [
+                'due' => $v->payable(),
+                'text' => money(abs($v->payable())),
+                'bills' => array_map(fn ($b) => [
+                    'title' => $b['expense']->title ?: label($b['expense']->type),
+                    'left' => money($b['left']),
+                    'due' => fmt_date($b['due']),
+                    'late' => $b['due']->lt(now()->startOfDay()),
+                ], array_slice($v->openBills(), 0, 6)),
+            ];
+        }
+
+        // editing: the payment already reduces the vendor's due, so add it back to show what was due before it
+        return ['dues' => $dues, 'self' => $m ? ['vendor' => $m->vendor_id, 'amount' => (float) $m->amount] : null];
+    }
+
     protected function filters(): array
     {
         return [

@@ -39,7 +39,7 @@
                                             {{ $c['late'] ? abs($c['days']).' '.__('days late') : ($c['days'] === 0 ? __('Due today') : fmt_date($o->due_date)) }}</span>
                                     @endif
                                 </div>
-                                <p class="truncate text-xs text-slate-500">{{ $o->customer->name }}@if ($o->collection_name) · {{ $o->collection_name }}@endif</p>
+                                <p class="truncate text-xs text-slate-500">{{ $o->customer->name }}@if ($o->brand_collection) · {{ $o->brand_collection }}@endif</p>
                                 <div class="mt-2 h-2 overflow-hidden rounded-full bg-slate-100"><div class="h-2 rounded-full" style="width: {{ $s['percent'] }}%; background: var(--viz-rev, #b8893a)"></div></div>
                                 <p class="mt-1 flex justify-between text-[11px] text-slate-500"><span>{{ $s['percent'] }}%</span><span class="tabular-nums">{{ number_format($o->qty) }} {{ __('pcs') }}</span></p>
                                 <div class="mt-2 flex flex-wrap gap-1 text-[11px]">

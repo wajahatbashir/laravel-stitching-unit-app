@@ -13,6 +13,8 @@
         'amount' => old('amount', $m?->amount),
         'date' => old('date', $m?->date?->format('Y-m-d') ?? now()->toDateString()),
         'payee' => old('payee', $m?->payee),
+        'mode' => old('payment_mode', $m?->payment_mode ?? 'cash'),
+        'paidNow' => old('paid_now', $m?->paid_now),
         'ocr_text' => old('ocr_text', ''),
         'cats' => $extra['categories'],
         'reading' => false,
@@ -123,10 +125,36 @@
             <x-field :f="$F['currency_id']" :model="$m" />
 
             <div><label class="label">{{ __('Date') }} <span class="text-rose-600">*</span></label><input type="date" name="date" class="input" x-model="date" required></div>
-            <x-field :f="$F['payment_mode']" :model="$m" />
-            <div><label class="label">{{ __('Paid to') }}</label><input name="payee" class="input" x-model="payee"></div>
-            <x-field :f="$F['vendor_id']" :model="$m" />
-            <x-field :f="$F['due_date']" :model="$m" />
+            <div>
+                <label class="label" for="f_payment_mode">{{ __('Paid via') }} <span class="text-rose-600">*</span></label>
+                <select id="f_payment_mode" name="payment_mode" class="input" x-model="mode" required>
+                    @foreach ($F['payment_mode']['options'] as $k => $l)<option value="{{ $k }}">{{ $l }}</option>@endforeach
+                </select>
+                @error('payment_mode')<p class="mt-1 text-xs text-rose-600">{{ $message }}</p>@enderror
+            </div>
+            {{-- fully on credit: nobody has been paid yet, so "Paid to" is switched off --}}
+            <div>
+                <label class="label">{{ __('Paid to') }}</label>
+                <input name="payee" class="input disabled:cursor-not-allowed disabled:opacity-60" x-model="payee" :disabled="mode === 'credit'"
+                       :placeholder="mode === 'credit' ? '{{ __('Not paid yet (on credit)') }}' : ''">
+            </div>
+            <div>
+                <x-field :f="$F['vendor_id']" :model="$m" />
+                <p x-show="mode === 'credit' || mode === 'partial'" x-cloak class="mt-1 text-xs text-amber-700">{{ __('Required for credit purchases: the unpaid part becomes a bill you owe this vendor.') }}</p>
+            </div>
+            {{-- partly on credit: how much was paid now, and how --}}
+            <div x-show="mode === 'partial'" x-cloak>
+                <label class="label" for="f_paid_now">{{ __('Amount paid now') }} <span class="text-rose-600">*</span></label>
+                <input id="f_paid_now" type="number" step="0.01" inputmode="decimal" name="paid_now" class="input" x-model="paidNow" :disabled="mode !== 'partial'">
+                @error('paid_now')<p class="mt-1 text-xs text-rose-600">{{ $message }}</p>@enderror
+            </div>
+            <x-field :f="$F['paid_via']" :model="$m" x-show="mode === 'partial'" x-cloak />
+            <div x-show="mode === 'partial'" x-cloak class="rounded-xl bg-amber-50 p-3 text-sm text-amber-900 ring-1 ring-amber-200 md:col-span-2">
+                {{ __('Total') }} <strong class="tabular-nums" x-text="num(amount)"></strong> −
+                {{ __('paid now') }} <strong class="tabular-nums" x-text="num(paidNow)"></strong> =
+                {{ __('goes on credit (you owe the vendor)') }}: <strong class="tabular-nums" x-text="num(Math.max(0, (parseFloat(amount) || 0) - (parseFloat(paidNow) || 0)))"></strong>
+            </div>
+            <x-field :f="$F['due_date']" :model="$m" x-show="mode === 'credit' || mode === 'partial'" x-cloak />
 
             {{-- Admin-defined custom fields (unit expenses) --}}
             @foreach ($extra['custom'] as $cf)
@@ -169,6 +197,7 @@ function expenseForm(init) {
             this.preview = null; this.fileName = ''; this.note = '';
             this.$refs.receipt.value = '';
         },
+        num(v) { return (parseFloat(v) || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }); },
         calc() { if (this.qty && this.rate) this.amount = (parseFloat(this.qty) * parseFloat(this.rate)).toFixed(2); },
         // downscale big camera photos before OCR (faster upload, better OCR speed)
         shrink(file, max = 1800) {

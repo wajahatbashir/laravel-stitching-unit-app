@@ -18,7 +18,7 @@ Made-up demo data, light theme. The dark theme and the Urdu (RTL) layout are swi
 
 | Area | What it does |
 |---|---|
-| **Orders** | Client, collection / brand, fabric, quantity, rate, due date, multiple photos; per-order cost vs revenue and profit; filters |
+| **Orders** | Customer, brand (managed list), collection, fabric, quantity, rate, due date, multiple photos; per-order cost vs revenue and profit; filters |
 | **Production & deliveries** | Piece counts per stage (cutting → stitching → finishing → quality check → packing → delivered), production board, late-order alerts, partial deliveries with PDF challan, rejects / rework per worker with optional pay deduction |
 | **Expenses** | Order, unit, labour and other expenses; admin-defined custom fields; **receipt upload with local OCR** (Tesseract) that pre-fills amount, date and payee; buy **on credit** from vendors |
 | **Vendors** | Credit bills, payments, per-vendor ledger and aging, due-bill alerts |

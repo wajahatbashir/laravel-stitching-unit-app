@@ -16,12 +16,12 @@ class Vendor extends Model
     public function expenses() { return $this->hasMany(Expense::class)->withoutGlobalScopes(); }
     public function payments() { return $this->hasMany(VendorPayment::class); }
 
-    /** Bills bought on credit (not yet paid for when they were recorded). */
-    public function creditBills() { return $this->expenses()->where('payment_mode', 'credit'); }
+    /** Bills bought on credit, fully or partly (the part not paid when they were recorded). */
+    public function creditBills() { return $this->expenses()->whereIn('payment_mode', Expense::CREDIT_MODES); }
 
     public function billed(): float
     {
-        return (float) $this->creditBills()->sum('base_amount');
+        return round((float) $this->creditBills()->sum(\DB::raw("CASE WHEN payment_mode = 'partial' THEN base_amount - COALESCE(paid_now, 0) * exchange_rate ELSE base_amount END")), 2);
     }
 
     public function paid(): float
@@ -45,7 +45,7 @@ class Vendor extends Model
         $credit = $this->paid();
         $open = [];
         foreach ($this->creditBills()->orderBy('date')->orderBy('id')->get() as $e) {
-            $bill = (float) $e->base_amount;
+            $bill = $e->creditAmount();
             $used = min($credit, $bill);
             $credit -= $used;
             if ($bill - $used > 0.004) {

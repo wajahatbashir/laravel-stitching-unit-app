@@ -44,6 +44,7 @@
             [__('Users'), 'users.index', 'users', 'users.view', 'users.*'],
             [__('Roles & permissions'), 'roles.index', 'shield', 'users.view', 'roles.*'],
             [__('Expense categories'), 'categories.index', 'cog', 'master.view', 'categories.*'],
+            [__('Brands'), 'brands.index', 'cog', 'master.view', 'brands.*'],
             [__('Garments & rate card'), 'garments.index', 'cog', 'master.view', 'garments.*'],
             [__('Custom fields'), 'custom-fields.index', 'cog', 'master.view', 'custom-fields.*'],
             [__('Currencies'), 'currencies.index', 'cog', 'master.view', 'currencies.*'],

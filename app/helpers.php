@@ -34,7 +34,7 @@ if (! function_exists('badge_class')) {
         return match (strtolower((string) $s)) {
             'paid', 'completed', 'delivered', 'active', 'in', 'investment', 'yes' => 'bg-emerald-100 text-emerald-800',
             'partial', 'partially paid', 'in_progress', 'repair', 'weekly', 'biweekly' => 'bg-amber-100 text-amber-800',
-            'unpaid', 'pending', 'out', 'withdrawal', 'cancelled', 'scrapped', 'advance' => 'bg-rose-100 text-rose-800',
+            'unpaid', 'overdue', 'pending', 'out', 'withdrawal', 'cancelled', 'scrapped', 'advance' => 'bg-rose-100 text-rose-800',
             default => 'bg-slate-100 text-slate-700',
         };
     }

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Brand;
 use App\Models\Customer;
 use App\Models\Order;
 use App\Services\Notifier;
@@ -15,8 +16,8 @@ class OrderController extends CrudController
     protected string $route = 'orders';
     protected string $title = 'Orders';
     protected string $singular = 'Order';
-    protected array $with = ['customer'];
-    protected array $searchable = ['order_no', 'collection_name', 'fabric_name', 'customer.name'];
+    protected array $with = ['customer', 'brand'];
+    protected array $searchable = ['order_no', 'collection_name', 'fabric_name', 'customer.name', 'brand.name'];
     protected ?string $dateColumn = 'date';
     protected ?string $sumColumn = 'qty';
     protected bool $offline = true;
@@ -32,8 +33,10 @@ class OrderController extends CrudController
             $this->f('order_no', 'Order number', 'text', ['required' => true, 'default' => Order::nextNumber(),
                 'rules' => $m ? "unique:orders,order_no,{$m->id}" : 'string|max:50']),
             $this->f('date', 'Order date', 'date', ['required' => true, 'default' => now()->toDateString()]),
-            $this->f('customer_id', 'Client', 'select', ['required' => true, 'options' => opts(Customer::class)]),
-            $this->f('collection_name', 'Collection / Brand'),
+            $this->f('customer_id', 'Customer', 'select', ['required' => true, 'options' => opts(Customer::class)]),
+            $this->f('brand_id', 'Brand', 'select', ['rules' => 'nullable|exists:brands,id', 'help' => __('Pick the brand. Missing one? Add it under Admin → Brands.'),
+                'options' => opts(Brand::class, 'name', fn ($q) => $q->where(fn ($w) => $w->where('is_active', true)->when($m?->brand_id, fn ($x, $id) => $x->orWhere('id', $id))))]),
+            $this->f('collection_name', 'Collection', 'text', ['help' => __('Type the collection name, e.g. Eid Luxe')]),
             $this->f('fabric_name', 'Fabric name'),
             $this->f('qty', 'Quantity (pcs)', 'number', ['required' => true, 'rules' => 'integer|min:1']),
             $this->f('rate', 'Rate per piece (billing)', 'number', ['step' => '0.01', 'rules' => 'nullable|numeric|min:0']),
@@ -49,9 +52,10 @@ class OrderController extends CrudController
     protected function filters(): array
     {
         return [
-            $this->flt('customer_id', 'Client', opts(Customer::class)),
+            $this->flt('customer_id', 'Customer', opts(Customer::class)),
             $this->flt('status', 'Status', $this->statuses()),
-            $this->flt('collection_name', 'Collection / Brand', [], ['like' => true]),
+            $this->flt('brand_id', 'Brand', opts(Brand::class)),
+            $this->flt('collection_name', 'Collection', [], ['like' => true]),
             $this->flt('fabric_name', 'Fabric', [], ['like' => true]),
         ];
     }
@@ -61,8 +65,9 @@ class OrderController extends CrudController
         return [
             [__('Order #'), 'order_no'],
             [__('Date'), 'date'],
-            [__('Client'), 'customer.name'],
-            [__('Collection / Brand'), 'collection_name'],
+            [__('Customer'), 'customer.name'],
+            [__('Brand'), 'brand.name'],
+            [__('Collection'), 'collection_name'],
             [__('Fabric'), 'fabric_name'],
             [__('Qty'), 'qty'],
             [__('Amount'), 'amount', ['money' => true]],

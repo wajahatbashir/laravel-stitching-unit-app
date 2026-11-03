@@ -31,6 +31,9 @@ class WorkerController extends CrudController
             $this->f('pay_cycle', 'Payment cycle', 'select', ['required' => true, 'default' => 'weekly',
                 'options' => ['weekly' => __('Weekly'), 'biweekly' => __('Every 2 weeks'), 'monthly' => __('Monthly')]]),
             $this->f('monthly_salary', 'Monthly salary', 'number', ['step' => '0.01', 'default' => 0, 'rules' => 'nullable|numeric|min:0']),
+            $this->f('opening_due', 'Previous due amount (we owe this worker)', 'number', ['step' => '0.01', 'default' => 0, 'rules' => 'nullable|numeric|between:-99999999,99999999',
+                'help' => __('Pending payment from before you started using this app. It is added to the worker\'s balance; payments and advances reduce it. Use a negative number if the worker owes you.')]),
+            $this->f('opening_date', 'Previous due as of', 'date', ['help' => __('The date this previous due was valid (empty = today).')]),
             $this->f('joined_at', 'Joining date', 'date'),
             $this->f('user_id', 'Login account (optional)', 'select', ['options' => opts(User::class), 'help' => __('Lets this worker see their own ledger')]),
             $this->f('notes', 'Notes', 'textarea', ['span' => 2]),
@@ -52,6 +55,7 @@ class WorkerController extends CrudController
             [__('Name'), 'name'],
             [__('Type'), 'type', ['label' => true]],
             [__('Cycle'), 'pay_cycle', ['label' => true]],
+            [__('Previous due'), 'opening_due', ['money' => true]],
             [__('Balance'), fn ($r) => $r->balance(), ['money' => true]],
             [__('Status'), fn ($r) => $r->is_active ? 'active' : 'cancelled', ['badge' => true, 'label' => true]],
         ];
@@ -63,6 +67,18 @@ class WorkerController extends CrudController
             'garments' => GarmentType::where('is_active', true)->get(),
             'rates' => $m ? $m->rates()->pluck('rate', 'garment_type_id')->all() : [],
         ];
+    }
+
+    protected function prepare(array $data, ?Model $m, Request $r): array
+    {
+        $data['opening_due'] = round((float) ($data['opening_due'] ?? 0), 2);
+        if ($data['opening_due'] == 0.0) {
+            $data['opening_date'] = null;                                   // nothing carried forward
+        } elseif (empty($data['opening_date'])) {
+            $data['opening_date'] = $m?->opening_date?->toDateString() ?? now()->toDateString();
+        }
+
+        return $data;
     }
 
     protected function saved(Model $m, Request $r, bool $created): void

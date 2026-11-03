@@ -18,7 +18,7 @@
             'text' => __('Account statement from :b — outstanding :a.', ['b' => biz('business_name'), 'a' => money($c->receivable())])])
     </div>
     <div class="card overflow-hidden"><div class="border-b px-4 py-3 font-semibold">{{ __('Orders') }} ({{ $orders->count() }})</div>
-        @forelse ($orders as $o)<a href="{{ route('orders.show', $o) }}" class="flex items-center justify-between gap-2 border-b px-4 py-2.5 text-sm last:border-0"><span>{{ $o->order_no }} · {{ $o->collection_name }} · {{ $o->qty }} {{ __('pcs') }}</span><span class="badge {{ badge_class($o->status) }}">{{ label($o->status) }}</span></a>
+        @forelse ($orders as $o)<a href="{{ route('orders.show', $o) }}" class="flex items-center justify-between gap-2 border-b px-4 py-2.5 text-sm last:border-0"><span>{{ $o->order_no }} · {{ $o->brand_collection }} · {{ $o->qty }} {{ __('pcs') }}</span><span class="badge {{ badge_class($o->status) }}">{{ label($o->status) }}</span></a>
         @empty<p class="p-4 text-sm text-slate-500">{{ __('No orders yet.') }}</p>@endforelse</div>
     <div class="card overflow-hidden"><div class="border-b px-4 py-3 font-semibold">{{ __('Invoices') }}</div>
         @forelse ($invoices as $i)<a href="{{ route('invoices.show', $i) }}" class="flex items-center justify-between gap-2 border-b px-4 py-2.5 text-sm last:border-0"><span>{{ $i->number }} · {{ fmt_date($i->date) }}</span><span class="tabular-nums">{{ money($i->total) }} <span class="badge {{ badge_class($i->status()) }}">{{ label($i->status()) }}</span></span></a>
@@ -26,7 +26,7 @@
     <div class="card overflow-hidden"><div class="border-b px-4 py-3 font-semibold">{{ __('Payments received') }}</div>
         @forelse ($payments as $p)
             <div class="border-b px-4 py-2.5 text-sm last:border-0">
-                <div class="flex justify-between gap-2"><span>{{ fmt_date($p->date) }} · {{ label($p->mode) }}@if ($p->reference) · {{ $p->reference }}@endif</span><span class="font-medium tabular-nums">{{ money($p->amount) }}</span></div>
+                <div class="flex justify-between gap-2"><span>{{ fmt_date($p->date) }} · {{ label($p->mode) }}@if ($p->reference) · {{ $p->reference }}@endif</span><span class="font-medium tabular-nums">{{ money($p->amount) }}@if ($p->receipt_path) <a href="{{ Storage::url($p->receipt_path) }}" target="_blank" class="ms-1 text-xs font-normal text-brand-700 underline" title="{{ __('Receipt') }}">📎 {{ __('Receipt') }}</a>@endif</span></div>
                 @if ($p->invoice_id)
                     <p class="text-xs text-slate-500">{{ __('Paid against') }} <a class="text-brand-700 underline" href="{{ route('invoices.show', $p->invoice_id) }}">{{ $p->invoice?->number }}</a></p>
                 @else

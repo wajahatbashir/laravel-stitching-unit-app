@@ -55,7 +55,7 @@ class ProductionLogController extends CrudController
         return [
             [__('Date'), 'date'],
             [__('Order'), 'order.order_no'],
-            [__('Client'), 'order.customer.name'],
+            [__('Customer'), 'order.customer.name'],
             [__('Stage'), fn ($r) => Production::label($r->stage), ['badge' => true]],
             [__('Pieces'), 'qty'],
             [__('Worker'), 'worker.name'],

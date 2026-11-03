@@ -18,7 +18,7 @@ class Expense extends Model
     public static bool $hasUuid = true;
     public static bool $ownScoped = true;
     protected $guarded = [];
-    protected $casts = ['date' => 'date', 'due_date' => 'date', 'custom' => 'array', 'amount' => 'decimal:2', 'base_amount' => 'decimal:2'];
+    protected $casts = ['date' => 'date', 'due_date' => 'date', 'custom' => 'array', 'amount' => 'decimal:2', 'base_amount' => 'decimal:2', 'paid_now' => 'decimal:2'];
 
     protected static function booted(): void
     {
@@ -38,4 +38,22 @@ class Expense extends Model
     public function asset() { return $this->belongsTo(Asset::class); }
     public function vendor() { return $this->belongsTo(Vendor::class); }
     public function currency() { return $this->belongsTo(Currency::class); }
+
+    public const CREDIT_MODES = ['credit', 'partial'];
+
+    /** Part paid at purchase, in the base currency (only for "partly on credit"). */
+    public function paidNowBase(): float
+    {
+        return $this->payment_mode === 'partial' ? round((float) $this->paid_now * (float) ($this->exchange_rate ?: 1), 2) : 0.0;
+    }
+
+    /** The part that is a bill we owe the vendor (base currency): all of a credit purchase, the unpaid rest of a partly-credit one. */
+    public function creditAmount(): float
+    {
+        return match ($this->payment_mode) {
+            'credit' => (float) $this->base_amount,
+            'partial' => max(0.0, round((float) $this->base_amount - $this->paidNowBase(), 2)),
+            default => 0.0,
+        };
+    }
 }

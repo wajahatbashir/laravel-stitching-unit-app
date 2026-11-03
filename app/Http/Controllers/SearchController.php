@@ -35,9 +35,9 @@ class SearchController extends Controller
         };
 
         $add('Orders', 'orders.view',
-            Order::with('customer')->where(fn ($w) => $w->where('order_no', 'like', $like)->orWhere('collection_name', 'like', $like)
-                ->orWhere('fabric_name', 'like', $like)->orWhereHas('customer', fn ($c) => $c->where('name', 'like', $like)))->latest('id'),
-            fn ($o) => ['label' => $o->order_no, 'sub' => trim($o->customer->name.' · '.($o->collection_name ?: '')), 'url' => route('orders.show', $o, false)]);
+            Order::with('customer', 'brand')->where(fn ($w) => $w->where('order_no', 'like', $like)->orWhere('collection_name', 'like', $like)
+                ->orWhere('fabric_name', 'like', $like)->orWhereHas('brand', fn ($b) => $b->where('name', 'like', $like))->orWhereHas('customer', fn ($c) => $c->where('name', 'like', $like)))->latest('id'),
+            fn ($o) => ['label' => $o->order_no, 'sub' => trim($o->customer->name.' · '.$o->brand_collection), 'url' => route('orders.show', $o, false)]);
 
         $add('Customers', 'customers.view',
             Customer::where(fn ($w) => $w->where('name', 'like', $like)->orWhere('phone', 'like', $like)->orWhere('contact_person', 'like', $like)),
