@@ -6,7 +6,8 @@
     @if ($errors->any())<div class="rounded-xl bg-rose-50 p-3 text-sm text-rose-800">@foreach ($errors->all() as $e)<p>{{ $e }}</p>@endforeach</div>@endif
 
     <div class="card p-4 md:p-6">
-        <h2 class="mb-3 font-semibold">{{ __('Business') }}</h2>
+        <h2 class="mb-1 font-semibold">{{ __('Business') }}</h2>
+        <p class="mb-3 text-xs text-slate-500">{{ __('Time zone') }}: <strong>Pakistan Standard Time</strong> ({{ config('app.timezone') }}, UTC+5) · {{ __('now') }} {{ now()->format('d M Y, H:i') }}. {{ __('All dates, times, reports and the nightly jobs follow it.') }}</p>
         <div class="grid gap-4 md:grid-cols-2">
             <div><label class="label">{{ __('Business name') }}</label><input name="business_name" class="input" value="{{ old('business_name', $values['business_name']) }}" required></div>
             <div><label class="label">{{ __('Phone') }}</label><input name="business_phone" class="input" value="{{ old('business_phone', $values['business_phone']) }}"></div>

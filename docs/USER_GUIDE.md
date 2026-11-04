@@ -67,6 +67,10 @@ Choose the type at the top:
 
 **Payment slips for workers:** in *Payments & advances* (and the quick *Record payment* box on a worker's page) use *Payment receipt* to attach the bank-app screenshot or transfer slip of what you sent — your evidence for an advance. It is shown on the payment's voucher page, as a 📎 *Slip* link in the worker's ledger (the worker sees it too in *My ledger*), and in the list.
 
+**Paying workers — two places, one record.** You can pay a worker from *Payments & advances* or from the **Record payment** box on the worker's own page. They are the same thing: both save the same record, so it appears in both places at once, in the worker's ledger, the payslip and voucher, the dashboard (*Wages paid*, *Payable*), the cash book and the reports. Editing or deleting it in either place changes it everywhere. The only difference is where you land afterwards (the worker's page after using the box on it).
+
+**Time.** Everything uses Pakistan Standard Time (UTC+5): dates and times on records, the dashboard's "today", reports, the nightly backup (02:00) and the morning alerts (08:00).
+
 ## 8. Inventory
 *Inventory → items* (laces, fabric…) with a low-stock level. *Stock movements*: in (bought) / out (used, optionally for an order). Admins are notified when stock drops to the minimum.
 
@@ -101,6 +105,8 @@ You see only what the admin enabled — typically add work/expense entries and *
 - **Dashboard charts:** *Revenue vs costs* for the last 6 months (hover or tap a month for the numbers; **Table** shows them as a list) and *Where the money went* this month, including wages.
 
 ## 13. Dashboard periods
+**Download PDF** (top right of the dashboard) saves the dashboard as a PDF — the same money position, period badges, charts, orders and expenses, for the period currently on screen (week / month / year / custom, and any earlier period you stepped back to). You only get the sections you are allowed to see. The PDF is stamped with the date, time and your name.
+
 Under *Money position* (always **today**) pick **This week / This month / This year / Custom**. The badges (in order: Revenue, Payments received, Orders received, Labour earned; then Expenses → Wages paid → Total costs → Net profit/loss), both charts and the Expenses card then show that period.
 - **‹ ›** moves to the previous period (and back); each tile shows ▲/▼ % compared with the equally long period before it.
 - **Custom:** choose *From* and *To* and press **Apply**, or tap a shortcut (Today, Last 7 / 30 / 90 days, Last 12 months). The address of the page can be bookmarked or shared.

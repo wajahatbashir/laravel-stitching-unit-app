@@ -12,7 +12,8 @@ return [
             'Badges, in order: Revenue, Payments received, Orders received, Labour earned; then Expenses → Wages paid → Total costs → Net profit/loss (Expenses + Wages paid = Total costs). Each shows the change versus the previous period.',
             'Labour counts as a cost when you PAY it (wages, salaries, advances), not when the work entry is made. Wages paid also shows how much of it settled dues from before the app.',
             'Money position is always as of today: Money available (bank + cash; the split appears only if you hold cash), Receivable (with past-due, advances held and overpaid), Payable (workers + vendors).',
-            'Late orders, vendor bills due and low stock appear as alerts.'],
+            'Late orders, vendor bills due and low stock appear as alerts.',
+            'Download PDF (top right) gives the dashboard as a PDF for the period on screen: same figures, badges, charts, orders and expenses.'],
         'tips' => ['The charts show revenue vs costs and where the money went.']],
 
     'orders' => ['group' => 'Business', 'title' => 'Orders', 'route' => 'orders.index', 'perm' => 'orders.view',
@@ -107,7 +108,7 @@ return [
 
     'worker-payments' => ['group' => 'Labour', 'title' => 'Payments & advances', 'route' => 'worker-payments.index', 'perm' => 'worker_payments.view',
         'purpose' => 'Cash or bank payments and advances to workers.',
-        'how' => ['Add a payment or advance; partial payments are fine.', 'Attach the payment slip (bank screenshot or transfer slip) as evidence; it is shown on the voucher page and the worker\'s ledger.', 'Open one (eye icon) for the payment voucher: PDF or WhatsApp.'],
+        'how' => ['Add a payment or advance; partial payments are fine. Paying from here or from Record payment on the worker\'s page is the same thing: both save to the same records, so the ledger, this list, the dashboard and the reports all show it.', 'Attach the payment slip (bank screenshot or transfer slip) as evidence; it is shown on the voucher page and the worker\'s ledger.', 'Open one (eye icon) for the payment voucher: PDF or WhatsApp.'],
         'tips' => []],
 
     'worker-adjustments' => ['group' => 'Labour', 'title' => 'Deductions & bonuses', 'route' => 'worker-adjustments.index', 'perm' => 'worker_payments.view',
@@ -178,7 +179,7 @@ return [
 
     'settings' => ['group' => 'Admin', 'title' => 'Settings & notifications', 'route' => 'settings', 'perm' => 'settings.view',
         'purpose' => 'Business details, logos, security rules and which alerts go to whom.',
-        'how' => ['Set business name, address, prefixes and logos.', 'Menu: tick only the items you want in the side menu, phone menu and quick-add list (Dashboard and Settings are always shown).', 'Tick which events notify by in-app, email or WhatsApp.',
+        'how' => ['Set business name, address, prefixes and logos. The time zone is Pakistan Standard Time (shown at the top of this page); all dates, times and the nightly jobs follow it.', 'Menu: tick only the items you want in the side menu, phone menu and quick-add list (Dashboard and Settings are always shown).', 'Tick which events notify by in-app, email or WhatsApp.',
             'Turn on Require 2FA for admins if wanted.'], 'tips' => ['Email needs real mail settings on the server.']],
 
     'periods' => ['group' => 'Admin', 'title' => 'Month close', 'route' => 'periods.index', 'perm' => 'period.close',

@@ -66,3 +66,9 @@ CSRF on all forms (offline queue refreshes token); permission checked in every C
 - **Identity (balance sheet ↔ P&L):** `earned_BS = PLnet(all time, paid basis) + fixed assets − labour earned-but-unpaid − previous dues`; `balanceSheet()['recon']['difference']` must be 0 and is shown on the report.
 - `tests/Feature/FinanceAuditTest.php` is a hand-calculated month (every expected figure is in the class comment) and checks dashboard, every finance report, a restricted user, the overpaid-invoice case and the identity. Run it after touching `Finance` or `ReportController`.
 - Reports are `ReportController::r_<key>()` returning head / rows / totals / filters / note; register the key in `Perms::REPORTS` and add a migration that creates the `reports.<key>` permission for Admin.
+
+## Time zone
+`config/app.php` `timezone` = `env('APP_TIMEZONE', 'Asia/Karachi')`; the mysql connection has `timezone` = `env('DB_TIMEZONE', '+05:00')` so `CURRENT_TIMESTAMP` (e.g. `audit_logs.created_at`) agrees with PHP. `App\Support\TimezoneShift` (+ migration `2026_11_07`) shifts stored date+time columns once (plain `date` columns never move; `audit_logs.created_at` is left alone except rows PHP wrote). New code: use `now()` / Carbon (never hard-code UTC). `TimezoneTest` guards the app/database clocks and the midnight edge.
+
+## Dashboard PDF
+`DashboardController::data()` builds the figures for both the page and `dashboard.pdf` (`resources/views/dashboard/pdf.blade.php`, table-based because dompdf has no CSS grid/flex; bars are sized `div`s with explicit spacers). Permission-gated sections mirror the page. Render check: `gs -sDEVICE=png16m -r80` on the downloaded PDF.

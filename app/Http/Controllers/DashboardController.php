@@ -8,11 +8,27 @@ use App\Models\Order;
 use App\Models\Worker;
 use App\Support\DashboardPeriod;
 use App\Support\Finance;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 
 class DashboardController extends Controller
 {
     public function index(Request $r)
+    {
+        return view('dashboard', $this->data($r));
+    }
+
+    /** The dashboard as a PDF: the same figures for the same period (period / offset / from / to in the address), only what the user may see. */
+    public function pdf(Request $r)
+    {
+        $d = $this->data($r);
+        $p = $d['p'];
+        $name = 'dashboard-'.$p->from->toDateString().'_'.$p->to->toDateString().'.pdf';
+
+        return Pdf::loadView('dashboard.pdf', $d)->setPaper('a4', 'portrait')->download($name);
+    }
+
+    private function data(Request $r): array
     {
         $u = auth()->user();
         $p = DashboardPeriod::resolve($r);
@@ -77,6 +93,6 @@ class DashboardController extends Controller
             $d['myBalance'] = $w->balance();
         }
 
-        return view('dashboard', $d);
+        return $d;
     }
 }

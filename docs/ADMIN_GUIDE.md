@@ -37,6 +37,9 @@ Typical “worker with balance sheet” role: `work_entries.view/create`, `expen
 ## Report permissions
 Each report has its own permission (*Roles & permissions → Reports*). The finance reports **Cash Book**, **Monthly Summary** and **Customer Receivables & Ageing** are given to Admins by default; give them to an accountant role as needed. Report figures are always company-wide, even for a user who may only see their own records elsewhere.
 
+## Time zone
+The app runs in **Pakistan Standard Time** (`Asia/Karachi`, UTC+5, no daylight saving): record times, "today" on the dashboard and in default dates, reports, the scheduler (backup 02:00, alerts 08:00) and the audit log all use it. It is shown at the top of *Settings*. The server can use another zone: set `APP_TIMEZONE` (and `DB_TIMEZONE`, e.g. `+05:00`) in `.env`. Times stored before 2026-11-04 were in UTC and were moved forward 5 hours once (migration `2026_11_07`), so old and new records agree.
+
 ## Choosing which menu items are shown
 **Settings & notifications → Menu**: every menu item has a checkbox, grouped like the menu (Business, Production, Expenses, Labour, Capital, Insights, Admin). Untick what you don't use and press *Save settings*; use **Show all** / **Hide all optional** to start over. The choice applies to everyone and to the side menu, the phone slide-out menu, the phone bottom bar and the *New* / quick-add list (a group with nothing left disappears). **Dashboard** and **Settings** are always shown so you can't lock yourself out. This only hides menu entries — what each person may open is still decided by *Roles & permissions*, and a hidden page can still be opened from a link or search.
 

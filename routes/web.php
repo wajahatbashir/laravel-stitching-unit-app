@@ -96,6 +96,7 @@ Route::middleware(['auth', \App\Http\Middleware\EnsureTwoFactor::class])->group(
     Route::post('/work-entries/bulk', [WorkEntryController::class, 'bulk'])->name('work-entries.bulk');
     Route::post('/salaries/generate', [SalaryEntryController::class, 'generate'])->name('salaries.generate');
     Route::get('/invoices/{id}/pdf', [InvoiceController::class, 'pdf'])->name('invoices.pdf');
+    Route::get('/dashboard/pdf', [\App\Http\Controllers\DashboardController::class, 'pdf'])->name('dashboard.pdf');
     Route::get('/documents/{kind}/{id}', [\App\Http\Controllers\DocumentController::class, 'download'])->name('documents.pdf');
     Route::post('/customers/{id}/statement/email', [\App\Http\Controllers\DocumentController::class, 'emailStatement'])->name('customers.statement-email');
     Route::get('/production', [\App\Http\Controllers\ProductionBoardController::class, 'index'])->name('production.board');

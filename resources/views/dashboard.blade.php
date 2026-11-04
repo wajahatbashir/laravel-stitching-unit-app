@@ -1,5 +1,9 @@
 @extends('layouts.app')
 @section('title', __('Dashboard'))
+@section('actions')
+    {{-- same period as on screen (period / offset / from / to are carried in the address) --}}
+    <a href="{{ route('dashboard.pdf', request()->query()) }}" class="btn btn-ghost btn-sm"><x-icon name="download" class="h-4 w-4" />{{ __('Download PDF') }}</a>
+@endsection
 @section('content')
 @php $stat = fn ($label, $value, $tone = 'text-slate-900', $sub = null) => compact('label', 'value', 'tone', 'sub'); @endphp
 

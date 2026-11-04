@@ -61,11 +61,12 @@ return [
     |
     | Here you may specify the default timezone for your application, which
     | will be used by the PHP date and date-time functions. The timezone
-    | is set to "UTC" by default as it is suitable for most use cases.
+    | is Pakistan Standard Time (Asia/Karachi, UTC+5, no daylight saving): every record, date default,
+    | report and scheduled job (nightly backup 02:00, alerts 08:00) follows it. Override with APP_TIMEZONE.
     |
     */
 
-    'timezone' => 'UTC',
+    'timezone' => env('APP_TIMEZONE', 'Asia/Karachi'),
 
     /*
     |--------------------------------------------------------------------------
