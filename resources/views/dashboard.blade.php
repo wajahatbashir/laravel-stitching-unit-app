@@ -22,11 +22,17 @@
     @isset($cb)
         <section>
             <h2 class="mb-2 text-sm font-semibold text-slate-500 uppercase">{{ __('Money position') }} · {{ __('today') }}</h2>
-            <div class="grid grid-cols-2 gap-3 lg:grid-cols-4">
+            @php
+                // one number for the money you have; the bank / cash split is only mentioned when you really hold cash (or it went negative)
+                $cash = $cb['cash']['balance'];
+                $bank = $cb['bank']['balance'];
+                $available = round($cash + $bank, 2);
+                $split = abs($cash) > 0.004 ? __('bank').' '.money($bank).' · '.__('cash').' '.money($cash).($cash < 0 ? ' — '.__('record the cash you took from the bank (Capital → Cash ⇄ Bank)') : '') : null;
+            @endphp
+            <div class="grid grid-cols-2 gap-3 lg:grid-cols-3">
                 @foreach ([
-                    [__('Cash in hand'), money($cb['cash']['balance']), $cb['cash']['balance'] < 0 ? 'text-rose-700' : 'text-slate-900', null],
-                    [__('Bank'), money($cb['bank']['balance']), $cb['bank']['balance'] < 0 ? 'text-rose-700' : 'text-slate-900', null],
-                    [__('Receivable'), money($recv), 'text-emerald-700', __('from customers').($custAdv > 0 ? ' · '.__('advances held').' '.money($custAdv) : '')],
+                    [__('Money available'), money($available), $available < 0 ? 'text-rose-700' : 'text-slate-900', $split],
+                    [__('Receivable'), money($recv), 'text-emerald-700', __('from customers').($custAdv > 0 ? ' · '.__('advances held').' '.money($custAdv) : '').(($overdue ?? 0) > 0 ? ' · '.__('past due').' '.money($overdue) : '').(($overpaid ?? 0) > 0 ? ' · '.__('overpaid').' '.money($overpaid) : '')],
                     [__('Payable'), money($payable + max(0, $vendorPay)), 'text-rose-700', __('workers').' '.money($payable).($vendorPay > 0 ? ' · '.__('vendors').' '.money($vendorPay) : '')],
                 ] as [$l, $v, $t, $s])
                     <div class="stat"><p class="text-xs text-slate-500">{{ $l }}</p><p class="mt-1 whitespace-nowrap text-[0.95rem] font-bold tabular-nums sm:text-lg md:text-xl {{ $t }}">{{ $v }}</p>@if($s)<p class="text-[11px] text-slate-400">{{ $s }}</p>@endif</div>

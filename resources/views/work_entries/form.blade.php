@@ -19,6 +19,13 @@
     @if ($offline)<input type="hidden" name="uuid" value="{{ (string) \Illuminate\Support\Str::uuid() }}">@endif
     @if ($errors->any())<div class="mb-4 rounded-xl bg-rose-50 p-3 text-sm text-rose-800 ring-1 ring-rose-200">@foreach ($errors->all() as $e)<p>{{ $e }}</p>@endforeach</div>@endif
 
+    @if ($m && ! empty($extra['pay']) && $extra['pay']['status'] !== 'unpaid')
+        <div class="mb-4 rounded-xl bg-amber-50 p-3 text-sm text-amber-900 ring-1 ring-amber-200">⚠ {{ __('Payment status') }}: <strong>{{ \App\Support\WorkPayStatus::label($extra['pay']['status']) }}</strong> — {{ __('paid') }} {{ money($extra['pay']['paid']) }} {{ __('of') }} {{ money($extra['pay']['amount']) }}. {{ __('Changing or deleting this entry changes the worker balance.') }}</div>
+    @endif
+    @if ($m?->isClosed())
+        <div class="mb-4 rounded-xl bg-slate-100 p-3 text-sm text-slate-700 ring-1 ring-slate-300">🔒 {{ __('This entry is closed (locked). You can change it because you are a Super Admin.') }}@if ($m->closed_at) <span class="text-xs text-slate-500">({{ __('closed') }} {{ $m->closed_at->format('d M Y, H:i') }}@if ($m->closer) {{ __('by') }} {{ $m->closer->name }}@endif)</span>@endif</div>
+    @endif
+
     <div class="card p-4 md:p-6">
         <div class="grid gap-4 md:grid-cols-2">
             <div>
@@ -50,6 +57,7 @@
                 <p class="text-3xl font-bold text-brand-800 tabular-nums" x-text="total()"></p>
             </div>
             <div class="md:col-span-2"><x-field :f="$F['notes']" :model="$m" /></div>
+            @isset($F['status'])<div class="md:col-span-2"><x-field :f="$F['status']" :model="$m" /></div>@endisset
         </div>
     </div>
 

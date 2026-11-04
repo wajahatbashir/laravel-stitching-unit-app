@@ -1,75 +1,24 @@
 @php
     $u = auth()->user();
     $rtl = app()->getLocale() === 'ur';
-    // [label, route, icon, permission, active pattern]
-    $groups = [
-        __('Business') => [
-            [__('Dashboard'), 'dashboard', 'home', null, 'dashboard'],
-            [__('Orders'), 'orders.index', 'orders', 'orders.view', 'orders.*'],
-            [__('Customers'), 'customers.index', 'users', 'customers.view', 'customers.*'],
-            [__('Invoices'), 'invoices.index', 'doc', 'invoices.view', 'invoices.*'],
-            [__('Customer payments'), 'customer-payments.index', 'cash', 'customer_payments.view', 'customer-payments.*'],
-        ],
-        __('Production') => [
-            [__('Production board'), 'production.board', 'orders', 'production.view', 'production.*'],
-            [__('Production log'), 'production-logs.index', 'doc', 'production.view', 'production-logs.*'],
-            [__('Rejects & rework'), 'production-rejects.index', 'shield', 'production.view', 'production-rejects.*'],
-            [__('Deliveries'), 'deliveries.index', 'cube', 'deliveries.view', 'deliveries.*'],
-        ],
-        __('Expenses') => [
-            [__('Expenses'), 'expenses.index', 'cash', 'expenses.view', 'expenses.*'],
-            [__('Vendors'), 'vendors.index', 'building', 'vendors.view', 'vendors.*'],
-            [__('Vendor payments'), 'vendor-payments.index', 'cash', 'vendor_payments.view', 'vendor-payments.*'],
-            [__('Inventory'), 'inventory-items.index', 'cube', 'inventory.view', 'inventory-items.*'],
-            [__('Stock movements'), 'stock.index', 'cube', 'inventory.view', 'stock.*'],
-        ],
-        __('Labour') => [
-            [__('Workers & Staff'), 'workers.index', 'users', 'workers.view', 'workers.*'],
-            [__('Work entries'), 'work-entries.index', 'orders', 'work_entries.view', 'work-entries.*'],
-            [__('Monthly salaries'), 'salaries.index', 'cash', 'salaries.view', 'salaries.*'],
-            [__('Payments & advances'), 'worker-payments.index', 'cash', 'worker_payments.view', 'worker-payments.*'],
-            [__('Deductions & bonuses'), 'worker-adjustments.index', 'cash', 'worker_payments.view', 'worker-adjustments.*'],
-            [__('My ledger'), 'my-ledger', 'doc', 'my.ledger', 'my-ledger'],
-        ],
-        __('Capital') => [
-            [__('Assets'), 'assets.index', 'building', 'assets.view', 'assets.*'],
-            [__('Investors'), 'investors.index', 'users', 'investors.view', 'investors.*'],
-            [__('Investments'), 'investments.index', 'cash', 'investments.view', 'investments.*'],
-        ],
-        __('Insights') => [
-            [__('Reports'), 'reports.index', 'chart', null, 'reports.*'],
-            [__('Help'), 'help', 'doc', null, 'help'],
-        ],
-        __('Admin') => [
-            [__('Users'), 'users.index', 'users', 'users.view', 'users.*'],
-            [__('Roles & permissions'), 'roles.index', 'shield', 'users.view', 'roles.*'],
-            [__('Expense categories'), 'categories.index', 'cog', 'master.view', 'categories.*'],
-            [__('Brands'), 'brands.index', 'cog', 'master.view', 'brands.*'],
-            [__('Garments & rate card'), 'garments.index', 'cog', 'master.view', 'garments.*'],
-            [__('Custom fields'), 'custom-fields.index', 'cog', 'master.view', 'custom-fields.*'],
-            [__('Currencies'), 'currencies.index', 'cog', 'master.view', 'currencies.*'],
-            [__('Settings & notifications'), 'settings', 'cog', 'settings.view', 'settings*'],
-            [__('Month close'), 'periods.index', 'doc', 'period.close', 'periods.*'],
-            [__('Backups'), 'backups.index', 'shield', 'backups.view', 'backups.*'],
-            [__('Reset test data'), 'reset.index', 'shield', null, 'reset.*'],
-            [__('Audit log'), 'audit', 'doc', 'audit.view', 'audit'],
-        ],
-    ];
+    // [label, route, icon, permission, active pattern] — defined once in App\Support\Menu; Settings → Menu can hide items
+    $groups = \App\Support\Menu::groups();
     $hasWorker = $u->worker()->exists(); // "My ledger" only makes sense for a login linked to a worker profile
-    $canSee = fn ($i) => ($i[3] === null || $u->can($i[3])) && ($i[1] !== 'my-ledger' || $hasWorker) && ($i[1] !== 'reset.index' || $u->hasRole('Super Admin')) && ($i[1] !== 'reports.index' || collect(\App\Support\Perms::REPORTS)->keys()->contains(fn ($k) => $u->can("reports.$k")));
+    $canSee = fn ($i) => ! \App\Support\Menu::isHidden($i[1]) && ($i[3] === null || $u->can($i[3])) && ($i[1] !== 'my-ledger' || $hasWorker) && ($i[1] !== 'reset.index' || $u->hasRole('Super Admin')) && ($i[1] !== 'reports.index' || collect(\App\Support\Perms::REPORTS)->keys()->contains(fn ($k) => $u->can("reports.$k")));
     $quick = collect([
-        [__('New expense'), route('expenses.create'), 'expenses.create'],
-        [__('Work entry'), route('work-entries.create'), 'work_entries.create'],
-        [__('Pay worker / advance'), route('worker-payments.create'), 'worker_payments.create'],
-        [__('New order'), route('orders.create'), 'orders.create'],
-        [__('Log production'), route('production-logs.create'), 'production.create'],
-        [__('New delivery'), route('deliveries.create'), 'deliveries.create'],
-        [__('New invoice'), route('invoices.create'), 'invoices.create'],
-        [__('Customer payment'), route('customer-payments.create'), 'customer_payments.create'],
-        [__('Pay a vendor'), route('vendor-payments.create'), 'vendor_payments.create'],
-        [__('Stock movement'), route('stock.create'), 'inventory.create'],
-        [__('Investment'), route('investments.create'), 'investments.create'],
-    ])->filter(fn ($q) => $u->can($q[2]))->values();
+        [__('New expense'), route('expenses.create'), 'expenses.create', 'expenses.index'],
+        [__('Work entry'), route('work-entries.create'), 'work_entries.create', 'work-entries.index'],
+        [__('Pay worker / advance'), route('worker-payments.create'), 'worker_payments.create', 'worker-payments.index'],
+        [__('New order'), route('orders.create'), 'orders.create', 'orders.index'],
+        [__('Log production'), route('production-logs.create'), 'production.create', 'production-logs.index'],
+        [__('New delivery'), route('deliveries.create'), 'deliveries.create', 'deliveries.index'],
+        [__('New invoice'), route('invoices.create'), 'invoices.create', 'invoices.index'],
+        [__('Customer payment'), route('customer-payments.create'), 'customer_payments.create', 'customer-payments.index'],
+        [__('Pay a vendor'), route('vendor-payments.create'), 'vendor_payments.create', 'vendor-payments.index'],
+        [__('Stock movement'), route('stock.create'), 'inventory.create', 'stock.index'],
+        [__('Investment'), route('investments.create'), 'investments.create', 'investments.index'],
+        [__('Cash from bank'), route('cash-transfers.create'), 'transfers.create', 'cash-transfers.index'],
+    ])->filter(fn ($q) => $u->can($q[2]) && ! \App\Support\Menu::isHidden($q[3]))->values();
     $unread = $u->unreadNotifications()->count();
     $precache = $quick->pluck(1)->map(fn ($x) => parse_url($x, PHP_URL_PATH))->merge(['/dashboard', '/sync'])->values();
     // breadcrumbs: Home › Module › current page (derived from the route name and the menu above)

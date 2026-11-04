@@ -50,6 +50,8 @@ Choose the type at the top:
 
 **Monthly staff:** generate the month's salary under *Monthly salaries*; give advances in *Payments & advances* (type *Advance*). On the worker's page you see *Brought forward · Previous due · Salary & earnings · Paid · Advances given* and the **Pending — balance to pay**. An advance given before the salary shows as *Advance still to adjust* and is deducted automatically once the salary is generated.
 
+**Work entries: paid status and locking.** In *Work entries* the **Payment** column shows *Paid / Partly paid / Unpaid*. Payments are not attached to single entries: a worker's payments and advances simply clear what they are owed oldest-first (previous due, then entries in date order). Editing or deleting a paid entry shows a warning, because it changes the worker's balance. Once an entry is settled, an **admin can lock it**: open it and set *Entry status* to *Closed*, or tick several rows in the grid and press **Lock selected**. A locked entry (🔒) cannot be edited, re-opened or deleted by anyone except a **Super Admin**, who can also *Re-open selected*. Locking never changes what the worker is owed; entries in a closed month are skipped by the bulk action.
+
 ## 7. Customers, invoices, payments
 - *Invoices → Add*: pick an order to pre-fill the line, edit lines, discount/tax. **PDF** button on the invoice page.
 - *Customer payments*: record money received. Pick an **invoice** if the payment is for that invoice; **leave the invoice empty to record an ADVANCE** (money on account).
@@ -68,12 +70,22 @@ Choose the type at the top:
 ## 8. Inventory
 *Inventory → items* (laces, fabric…) with a low-stock level. *Stock movements*: in (bought) / out (used, optionally for an order). Admins are notified when stock drops to the minimum.
 
+**Cash and bank:** money received into the bank (customer payments) stays in *Bank*. When you take cash out to pay cash expenses, record it under **Capital → Cash ⇄ Bank → Took cash out of the bank** — *Cash in hand* goes up and *Bank* goes down by the same amount. The dashboard shows one number, **Money available** (bank + cash); it only adds a *bank … · cash …* line when you really hold cash, or when cash went negative (cash was paid out that was never recorded as taken from the bank). The separate Cash / Bank balances are in *Reports → Cash, Bank & Investments*. It is not an expense and does not change profit.
+
+**Dashboard costs vs Expenses page:** *Total costs* = the expenses on the Expenses page **plus** the wages, salaries and advances you **paid** to workers in the period (the tile shows both parts). Work you have entered but not yet paid is **not** a cost until you pay it. The period badges are in a fixed order: *Revenue · Payments received · Orders received · Labour earned* on the first row, then **Expenses → Wages paid → Total costs → Net profit/loss** (Expenses + Wages paid = Total costs). *Labour earned* is the work + salaries of the period; what you still owe workers is the **Payable** card at the top. Every payment or advance you record lowers it; when a worker's balance reaches zero they show *Paid in full* — there is nothing to close by hand.
+
 ## 9. Assets & investments
 - **Assets:** machines (number, brand, model, serial, cost, vendor, status, photos), furniture, others. The asset page lists its repair expenses.
 - **Investors / Investments:** each deposit or withdrawal with *Bank* or *Cash in hand*. These drive the cash/bank balances.
 
 ## 10. Reports (Excel + PDF)
-Order cost & profit · Expenses · Labour payable/paid · Worker statement · Customer ledger · Cash/bank & investments · Profit & Loss · Balance sheet · Asset register · Inventory stock. Use the date and other filters, then export.
+Order cost & profit · Expenses · Labour payable/paid · Worker statement · Customer ledger · Cash/bank & investments · **Cash Book** · **Monthly Summary** · **Customer Receivables & Ageing** · Profit & Loss · Balance sheet · Vendor payables · Asset register · Inventory stock · Production · Rejects. Use the date and other filters, then export.
+
+- **Cash Book:** choose *Bank* or *Cash in hand* (and optionally a date range). Every movement is listed with a running balance, an opening balance for the range and a closing balance — the closing balance of the whole period equals the figure on the dashboard, so you can tick it off against your bank statement. Cash taken from the bank shows as money out of the bank and money in to cash.
+- **Monthly Summary:** for each calendar month, Revenue, Expenses, Wages paid, Total costs, Net profit/loss, and the cash side (Money in, Money out, Net cash flow). Default: the last 12 months.
+- **Customer Receivables & Ageing:** per customer, what was invoiced and received, what is still outstanding and how late it is (current, 1–30, 31–60, 61–90, 90+ days), plus advances held and overpayments. Each invoice counts on its own, so one customer's overpayment never hides another customer's debt.
+- **Profit & Loss basis:** revenue = invoiced in the period; costs = expenses (counted when bought, including credit purchases) + wages, salaries and advances **when paid**. Work entered but not yet paid is not a cost until paid. A memo line shows how much of the wages paid went toward dues from before the app (it is part of the wages paid and of the costs). Advances from customers are not revenue until invoiced.
+- **Balance sheet:** assets − liabilities = net worth; a closing block shows how *Earnings retained* ties to the all-time Profit & Loss (machinery kept as an asset, labour earned but unpaid, dues from before the app). *Unexplained difference* must be 0.00.
 
 ## 11. If you are a worker with a login
 You see only what the admin enabled — typically add work/expense entries and **My ledger** (your earnings, payments, balance). You can't see other people's records.
@@ -89,7 +101,7 @@ You see only what the admin enabled — typically add work/expense entries and *
 - **Dashboard charts:** *Revenue vs costs* for the last 6 months (hover or tap a month for the numbers; **Table** shows them as a list) and *Where the money went* this month, including wages.
 
 ## 13. Dashboard periods
-Under *Money position* (always **today**) pick **This week / This month / This year / Custom**. The tiles (revenue, payments received, costs, profit, orders received, wages paid), both charts and the Expenses card then show that period.
+Under *Money position* (always **today**) pick **This week / This month / This year / Custom**. The badges (in order: Revenue, Payments received, Orders received, Labour earned; then Expenses → Wages paid → Total costs → Net profit/loss), both charts and the Expenses card then show that period.
 - **‹ ›** moves to the previous period (and back); each tile shows ▲/▼ % compared with the equally long period before it.
 - **Custom:** choose *From* and *To* and press **Apply**, or tap a shortcut (Today, Last 7 / 30 / 90 days, Last 12 months). The address of the page can be bookmarked or shared.
 - The chart bars adapt: days for a week, weeks for a month, months for a year or long custom ranges.

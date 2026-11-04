@@ -9,8 +9,9 @@ return [
     'dashboard' => ['group' => 'Business', 'title' => 'Dashboard', 'route' => 'dashboard', 'perm' => null,
         'purpose' => 'One-screen health check of the business for the period you choose.',
         'how' => ['Pick This week, This month, This year or Custom at the top; use the arrows to step to earlier periods.',
-            'Tiles show revenue, costs, profit, payments received and wages, each with the change versus the previous period.',
-            'Money position (cash, bank, receivables, payables) is always as of today.',
+            'Badges, in order: Revenue, Payments received, Orders received, Labour earned; then Expenses → Wages paid → Total costs → Net profit/loss (Expenses + Wages paid = Total costs). Each shows the change versus the previous period.',
+            'Labour counts as a cost when you PAY it (wages, salaries, advances), not when the work entry is made. Wages paid also shows how much of it settled dues from before the app.',
+            'Money position is always as of today: Money available (bank + cash; the split appears only if you hold cash), Receivable (with past-due, advances held and overpaid), Payable (workers + vendors).',
             'Late orders, vendor bills due and low stock appear as alerts.'],
         'tips' => ['The charts show revenue vs costs and where the money went.']],
 
@@ -96,7 +97,7 @@ return [
 
     'work-entries' => ['group' => 'Labour', 'title' => 'Work entries', 'route' => 'work-entries.index', 'perm' => 'work_entries.view',
         'purpose' => 'Piece-rate work: who stitched how many of which garment.',
-        'how' => ['Add an entry: worker, garment, quantity, date and optionally the order.', 'The rate comes from the rate card and is saved with the entry.'],
+        'how' => ['Add an entry: worker, garment, quantity, date and optionally the order.', 'The rate comes from the rate card and is saved with the entry.', 'The Payment column shows Paid / Partly paid / Unpaid: a worker\'s payments clear their entries oldest first. Editing or deleting a paid entry shows a warning, because it changes what the worker is owed.', 'Admins can lock a settled entry (Entry status = Closed) or tick several rows in the grid and press Lock selected. A locked entry can only be changed, re-opened or deleted by a Super Admin.'],
         'tips' => ['Changing a rate later only affects new entries.']],
 
     'salaries' => ['group' => 'Labour', 'title' => 'Monthly salaries', 'route' => 'salaries.index', 'perm' => 'salaries.view',
@@ -119,6 +120,11 @@ return [
         'how' => ['Pick a period to see what you earned and were paid.', 'Download your payslip.'],
         'tips' => []],
 
+    'cash-transfers' => ['group' => 'Capital', 'title' => 'Cash ⇄ Bank', 'route' => 'cash-transfers.index', 'perm' => 'transfers.view',
+        'purpose' => 'Record cash you take out of the bank (or deposit back), so Cash in hand and Bank are both correct.',
+        'how' => ['When you withdraw cash to pay expenses in cash, add "Took cash out of the bank" with the amount.', 'Cash in hand goes up and Bank goes down by the same amount; your total money does not change.', 'It is not an expense, so costs and profit are unaffected.'],
+        'tips' => ['If Cash in hand is negative on the dashboard, you paid cash that was never recorded as taken from the bank.']],
+
     'assets' => ['group' => 'Capital', 'title' => 'Assets', 'route' => 'assets.index', 'perm' => 'assets.view',
         'purpose' => 'Machines, furniture and equipment you own.',
         'how' => ['Add an asset with cost, purchase date, serial number and photos.'],
@@ -135,9 +141,9 @@ return [
         'tips' => ['This drives the cash and bank balances.']],
 
     'reports' => ['group' => 'Insights', 'title' => 'Reports', 'route' => 'reports.index', 'perm' => null,
-        'purpose' => 'Profit and loss, balance sheet, ledgers, payables and more, with Excel and PDF export.',
-        'how' => ['Open a report, set the filters, then export if needed.', 'You only see reports you have been given.'],
-        'tips' => ['Balance sheet net worth = assets − worker payable − customer advances − vendor payables.']],
+        'purpose' => 'Profit and loss, balance sheet, cash book, receivables ageing, monthly summary, ledgers, payables and more, with Excel and PDF export.',
+        'how' => ['Open a report, set the filters, then export if needed.', 'You only see reports you have been given.', 'Cash Book lists every bank or cash movement with a running balance (it ends at the balance on the dashboard); Monthly Summary shows profit and cash flow month by month; Customer Receivables & Ageing shows who owes what and how late.', 'The Balance Sheet ends with a block that ties Earnings retained to the Profit & Loss, with an unexplained difference that should be 0.00.'],
+        'tips' => ['Balance sheet net worth = assets − worker payable − customer advances − customer overpayments − vendor payables.', 'Profit & Loss: revenue is invoiced; costs are expenses when bought plus wages paid when paid. Money from customers that is not yet invoiced (advances) is not revenue.']],
 
     'users' => ['group' => 'Admin', 'title' => 'Users', 'route' => 'users.index', 'perm' => 'users.view',
         'purpose' => 'Logins for you and your team.',
@@ -172,7 +178,7 @@ return [
 
     'settings' => ['group' => 'Admin', 'title' => 'Settings & notifications', 'route' => 'settings', 'perm' => 'settings.view',
         'purpose' => 'Business details, logos, security rules and which alerts go to whom.',
-        'how' => ['Set business name, address, prefixes and logos.', 'Tick which events notify by in-app, email or WhatsApp.',
+        'how' => ['Set business name, address, prefixes and logos.', 'Menu: tick only the items you want in the side menu, phone menu and quick-add list (Dashboard and Settings are always shown).', 'Tick which events notify by in-app, email or WhatsApp.',
             'Turn on Require 2FA for admins if wanted.'], 'tips' => ['Email needs real mail settings on the server.']],
 
     'periods' => ['group' => 'Admin', 'title' => 'Month close', 'route' => 'periods.index', 'perm' => 'period.close',

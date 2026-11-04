@@ -80,15 +80,33 @@
         </div>
     </div>
 @else
+    <div @if (! empty($bulk)) x-data="{ n: 0,
+        upd() { this.n = new Set([...document.querySelectorAll('.bulk-cb:checked')].map(c => c.value)).size },
+        all(e) { document.querySelectorAll('.bulk-cb').forEach(c => c.checked = e.target.checked); this.upd() },
+        clear() { document.querySelectorAll('.bulk-cb, .bulk-all').forEach(c => c.checked = false); this.upd() } }" @endif>
+    @if (! empty($bulk))
+        {{-- grid actions: tick rows, then use the buttons --}}
+        <form id="bulkForm" method="POST" action="{{ $bulk['route'] }}" x-show="n > 0" x-cloak class="sticky top-2 z-20 mb-3 flex flex-wrap items-center gap-2 rounded-xl bg-white p-3 shadow ring-1 ring-brand-300">
+            @csrf
+            <span class="text-sm font-semibold"><span x-text="n"></span> {{ __('selected') }}</span>
+            @foreach ($bulk['actions'] as $a)
+                <button type="submit" name="action" value="{{ $a['value'] }}" class="btn {{ $a['value'] === 'lock' ? 'btn-primary' : 'btn-ghost' }} btn-sm" onclick="return confirm('{{ e($a['confirm']) }}')">{{ $a['value'] === 'lock' ? '🔒 ' : '' }}{{ $a['label'] }}</button>
+            @endforeach
+            <button type="button" class="btn btn-ghost btn-sm" @click="clear()">{{ __('Clear selection') }}</button>
+        </form>
+    @endif
     {{-- Mobile cards --}}
     <div class="space-y-3 md:hidden">
         @foreach ($rows as $row)
             <div class="card p-4">
                 <div class="flex items-start justify-between gap-3">
-                    <div class="min-w-0 font-semibold text-slate-900">{!! $cell($row, $columns[0]) !!}</div>
+                    <div class="flex min-w-0 items-start gap-3">
+                        @if (! empty($bulk))<input type="checkbox" form="bulkForm" name="ids[]" value="{{ $row->id }}" class="bulk-cb mt-1 h-5 w-5 shrink-0 rounded border-slate-300" @change="upd()" aria-label="{{ __('Select') }}">@endif
+                        <div class="min-w-0 font-semibold text-slate-900">{!! $cell($row, $columns[0]) !!}</div>
+                    </div>
                     <div class="flex shrink-0 gap-1">
                         @if ($canShow)<a href="{{ route($route.'.show', $row) }}" class="btn btn-ghost btn-sm"><x-icon name="eye" class="h-4 w-4" /></a>@endif
-                        @if ($canEdit)<a href="{{ route($route.'.edit', $row) }}" class="btn btn-ghost btn-sm"><x-icon name="pencil" class="h-4 w-4" /></a>@endif
+                        @if ($canEdit && ! in_array($row->id, $frozenIds))<a href="{{ route($route.'.edit', $row) }}" class="btn btn-ghost btn-sm"><x-icon name="pencil" class="h-4 w-4" /></a>@endif
                     </div>
                 </div>
                 <dl class="mt-2 grid grid-cols-2 gap-x-3 gap-y-1.5 text-sm">
@@ -96,10 +114,12 @@
                         <div class="min-w-0"><dt class="text-xs text-slate-400">{{ $col[0] }}</dt><dd class="truncate text-slate-700">{!! $cell($row, $col) !!}</dd></div>
                     @endforeach
                 </dl>
-                @if ($canDelete && in_array($row->id, $lockedIds))
+                @if (in_array($row->id, $frozenIds))
+                    <p class="mt-3 text-end text-xs text-amber-700">🔒 {{ __('Locked — only a Super Admin can change it') }}</p>
+                @elseif ($canDelete && in_array($row->id, $lockedIds))
                     <p class="mt-3 text-end text-xs text-amber-700">🔒 {{ __('Closed month') }}</p>
                 @elseif ($canDelete)
-                    <form method="POST" action="{{ route($route.'.destroy', $row) }}" class="mt-3 text-end" onsubmit="return confirm('{{ __('Delete this record?') }}')">@csrf @method('DELETE')
+                    <form method="POST" action="{{ route($route.'.destroy', $row) }}" class="mt-3 text-end" onsubmit="return confirm('{{ in_array($row->id, $warnIds) ? __('This entry is already covered by payments. Deleting it changes the balance of the worker. Delete anyway?') : __('Delete this record?') }}')">@csrf @method('DELETE')
                         <button class="text-xs font-medium text-rose-600">{{ __('Delete') }}</button></form>
                 @endif
             </div>
@@ -110,22 +130,25 @@
     <div class="card hidden max-h-[70vh] overflow-auto md:block">
         <table class="min-w-full divide-y divide-slate-200">
             <thead class="sticky top-0 z-10 bg-slate-50 shadow-[0_1px_0_var(--color-slate-200)]"><tr>
+                @if (! empty($bulk))<th class="th w-10"><input type="checkbox" class="bulk-all h-4 w-4 rounded border-slate-300" @change="all($event)" aria-label="{{ __('Select all') }}"></th>@endif
                 @foreach ($columns as $col)<th class="th {{ ! empty(($col[2] ?? [])['money']) ? 'text-end' : '' }}">{{ $col[0] }}</th>@endforeach
                 <th class="th text-end">{{ __('Actions') }}</th>
             </tr></thead>
             <tbody class="divide-y divide-slate-100">
                 @foreach ($rows as $row)
                     <tr class="odd:bg-transparent even:bg-slate-50/50 hover:bg-brand-50">
+                        @if (! empty($bulk))<td class="td w-10"><input type="checkbox" form="bulkForm" name="ids[]" value="{{ $row->id }}" class="bulk-cb h-4 w-4 rounded border-slate-300" @change="upd()" aria-label="{{ __('Select') }}"></td>@endif
                         @foreach ($columns as $col)
                             <td class="td {{ ! empty(($col[2] ?? [])['money']) ? 'text-end tabular-nums' : '' }}">{!! $cell($row, $col) !!}</td>
                         @endforeach
                         <td class="td text-end">
                             <div class="inline-flex gap-1">
                                 @if ($canShow)<a href="{{ route($route.'.show', $row) }}" class="btn btn-ghost btn-sm" title="{{ __('View') }}"><x-icon name="eye" class="h-4 w-4" /></a>@endif
-                                @if ($canEdit)<a href="{{ route($route.'.edit', $row) }}" class="btn btn-ghost btn-sm" title="{{ __('Edit') }}"><x-icon name="pencil" class="h-4 w-4" /></a>@endif
-                                @if ($canDelete && in_array($row->id, $lockedIds))<span class="btn btn-ghost btn-sm pointer-events-none opacity-70" title="{{ __('Closed month') }}">🔒</span>
+                                @if ($canEdit && ! in_array($row->id, $frozenIds))<a href="{{ route($route.'.edit', $row) }}" class="btn btn-ghost btn-sm" title="{{ __('Edit') }}"><x-icon name="pencil" class="h-4 w-4" /></a>@endif
+                                @if (in_array($row->id, $frozenIds))<span class="btn btn-ghost btn-sm pointer-events-none opacity-70" title="{{ __('Locked — only a Super Admin can change it') }}">🔒</span>
+                                @elseif ($canDelete && in_array($row->id, $lockedIds))<span class="btn btn-ghost btn-sm pointer-events-none opacity-70" title="{{ __('Closed month') }}">🔒</span>
                                 @elseif ($canDelete)
-                                    <form method="POST" action="{{ route($route.'.destroy', $row) }}" onsubmit="return confirm('{{ __('Delete this record?') }}')">@csrf @method('DELETE')
+                                    <form method="POST" action="{{ route($route.'.destroy', $row) }}" onsubmit="return confirm('{{ in_array($row->id, $warnIds) ? __('This entry is already covered by payments. Deleting it changes the balance of the worker. Delete anyway?') : __('Delete this record?') }}')">@csrf @method('DELETE')
                                         <button class="btn btn-danger btn-sm" title="{{ __('Delete') }}"><x-icon name="trash" class="h-4 w-4" /></button></form>
                                 @endif
                             </div>
@@ -136,5 +159,6 @@
         </table>
     </div>
     <div class="mt-4">{{ $rows->links() }}</div>
+    </div>
 @endif
 @endsection

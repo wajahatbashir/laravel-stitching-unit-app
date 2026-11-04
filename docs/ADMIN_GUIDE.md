@@ -34,8 +34,17 @@ Typical “worker with balance sheet” role: `work_entries.view/create`, `expen
 - **WhatsApp:** set `WHATSAPP_TOKEN` and `WHATSAPP_PHONE_ID` (WhatsApp Cloud API) in `.env` and a phone number (with country code) on the admin user; until then messages are only written to `storage/logs`.
 - *Order due soon* needs the scheduler: `* * * * * cd /var/www/html/local.lumiere-app.com && php8.3 artisan schedule:run`.
 
+## Report permissions
+Each report has its own permission (*Roles & permissions → Reports*). The finance reports **Cash Book**, **Monthly Summary** and **Customer Receivables & Ageing** are given to Admins by default; give them to an accountant role as needed. Report figures are always company-wide, even for a user who may only see their own records elsewhere.
+
+## Choosing which menu items are shown
+**Settings & notifications → Menu**: every menu item has a checkbox, grouped like the menu (Business, Production, Expenses, Labour, Capital, Insights, Admin). Untick what you don't use and press *Save settings*; use **Show all** / **Hide all optional** to start over. The choice applies to everyone and to the side menu, the phone slide-out menu, the phone bottom bar and the *New* / quick-add list (a group with nothing left disappears). **Dashboard** and **Settings** are always shown so you can't lock yourself out. This only hides menu entries — what each person may open is still decided by *Roles & permissions*, and a hidden page can still be opened from a link or search.
+
 ## Audit log
 Every create/update/delete is recorded (who, what, changed fields, IP) — *Audit log* (needs `audit.view`).
+
+## Locking work entries
+The permission **Work entries: lock / close entries** (`work_entries.close`) lets a role close entries one by one (*Entry status = Closed* on the entry) or in bulk (tick rows in *Work entries* → **Lock selected**). Admins have it by default; the *User* role does not. A closed entry can only be edited, re-opened (**Re-open selected**) or deleted by a **Super Admin** — the rule is enforced in the data layer, so it also applies to offline-synced and any other changes. The *Payment* column (Paid / Partly paid / Unpaid) is informational: payments clear a worker's earnings oldest-first.
 
 ## Housekeeping
 - Records referenced elsewhere can't be deleted (customer with orders, worker with entries…) — deactivate instead.

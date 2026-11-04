@@ -93,6 +93,7 @@ Route::middleware(['auth', \App\Http\Middleware\EnsureTwoFactor::class])->group(
 
     // extra (non-resource) routes — declared before the resources they could clash with
     Route::post('/expenses/ocr', [ExpenseController::class, 'ocr'])->name('expenses.ocr');
+    Route::post('/work-entries/bulk', [WorkEntryController::class, 'bulk'])->name('work-entries.bulk');
     Route::post('/salaries/generate', [SalaryEntryController::class, 'generate'])->name('salaries.generate');
     Route::get('/invoices/{id}/pdf', [InvoiceController::class, 'pdf'])->name('invoices.pdf');
     Route::get('/documents/{kind}/{id}', [\App\Http\Controllers\DocumentController::class, 'download'])->name('documents.pdf');
@@ -111,6 +112,7 @@ Route::middleware(['auth', \App\Http\Middleware\EnsureTwoFactor::class])->group(
         'assets' => AssetController::class,
         'investors' => InvestorController::class,
         'investments' => InvestmentController::class,
+        'cash-transfers' => \App\Http\Controllers\CashTransferController::class,
         'workers' => WorkerController::class,
         'work-entries' => WorkEntryController::class,
         'salaries' => SalaryEntryController::class,

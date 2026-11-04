@@ -45,6 +45,8 @@ class DashboardController extends Controller
             // "right now" figures
             $d['cb'] = Finance::cashBank();
             $d['recv'] = Finance::receivables();
+            $d['overdue'] = Finance::overdueReceivables();
+            $d['overpaid'] = Finance::overpaid();
             $d['vendorPay'] = Finance::vendorPayables();
             $d['custAdv'] = Finance::customerAdvances();
             [$d['payable'], $d['advances']] = Finance::workerBalances();

@@ -1,12 +1,14 @@
 {{-- Phone navigation: bottom bar, quick-add sheet, slide-out menu --}}
 @php
     $tab = fn ($label, $route, $icon, $pattern, $perm = null) => ['l' => $label, 'r' => $route, 'i' => $icon, 'p' => $pattern, 'ok' => $perm === null || $u->can($perm)];
-    $tabsL = [$tab(__('Home'), 'dashboard', 'home', 'dashboard'), $tab(__('Orders'), 'orders.index', 'orders', 'orders.*', 'orders.view')];
-    $tabsR = [$tab(__('Expenses'), 'expenses.index', 'cash', 'expenses.*', 'expenses.view'), $tab(__('Labour'), 'workers.index', 'users', 'workers.*', 'workers.view')];
+    // tabs whose menu item was hidden in Settings → Menu are left out (Home is always there)
+    $keep = fn ($tabs) => array_values(array_filter($tabs, fn ($t) => $t['r'] === 'dashboard' || ! \App\Support\Menu::isHidden($t['r'])));
+    $tabsL = $keep([$tab(__('Home'), 'dashboard', 'home', 'dashboard'), $tab(__('Orders'), 'orders.index', 'orders', 'orders.*', 'orders.view')]);
+    $tabsR = $keep([$tab(__('Expenses'), 'expenses.index', 'cash', 'expenses.*', 'expenses.view'), $tab(__('Labour'), 'workers.index', 'users', 'workers.*', 'workers.view')]);
 @endphp
 
 <nav class="fixed inset-x-0 bottom-0 z-30 border-t border-slate-200 bg-white md:hidden" style="padding-bottom: env(safe-area-inset-bottom)">
-    <div class="mx-auto grid max-w-md grid-cols-5 items-end text-[11px] font-medium text-slate-500">
+    <div class="mx-auto grid max-w-md items-end text-[11px] font-medium text-slate-500" style="grid-template-columns: repeat({{ count($tabsL) + 1 + count($tabsR) }}, minmax(0, 1fr))">
         @foreach ($tabsL as $t)
             <a href="{{ $t['ok'] ? route($t['r']) : route('dashboard') }}" class="tab {{ request()->routeIs($t['p']) ? 'tab-on' : '' }}"><x-icon :name="$t['i']" class="h-6 w-6" />{{ $t['l'] }}</a>
         @endforeach

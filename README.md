@@ -26,7 +26,7 @@ Made-up demo data, light theme. The dark theme and the Urdu (RTL) layout are swi
 | **Customers & invoices** | Invoices with PDF, partial payments, **customer advances** applied to invoices, **statements** by PDF / WhatsApp / email |
 | **Capital** | Assets, investors, investments, cash and bank position, balance sheet, profit & loss |
 | **Inventory** | Items, stock movements, low-stock alerts |
-| **Reports** | Order cost & profit, expenses, labour, customer ledger, vendor payables, production, quality, cash, P&L, balance sheet — all with Excel / PDF export |
+| **Reports** | Order cost & profit, expenses, labour, customer ledger, **cash book**, **monthly summary**, **customer receivables & ageing**, vendor payables, production, quality, cash, P&L, balance sheet (ties to the P&L) — all with Excel / PDF export |
 | **Dashboard** | Week / month / year / custom period with change vs the previous period, charts, alerts |
 | **Offline** | Records saved without internet queue in the browser and sync automatically (idempotent, no duplicates) |
 | **Access control** | Super Admin / Admin / User, per-module permissions, "own records only" scope, worker self-service ledger, audit log |

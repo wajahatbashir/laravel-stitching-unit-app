@@ -161,11 +161,30 @@ abstract class CrudController extends Controller
             // rows in a closed month show a padlock instead of the delete button
             'lockedIds' => in_array(\App\Models\Concerns\LocksPeriod::class, class_uses_recursive($this->model), true)
                 ? $rows->getCollection()->filter(fn ($m) => PeriodLock::isLocked($m))->pluck('id')->all() : [],
+            'frozenIds' => $this->frozenIds($rows->getCollection()),   // fully locked rows: no edit / delete buttons
+            'warnIds' => $this->warnIds($rows->getCollection()),       // rows whose delete asks for an extra warning
+            'bulk' => $this->bulkActions(),                              // checkbox column + action bar when not null
             'canShow' => method_exists($this, 'show'),
             'canEdit' => auth()->user()->can("{$this->module}.edit"),
             'canCreate' => auth()->user()->can("{$this->module}.create"),
             'canDelete' => auth()->user()->can("{$this->module}.delete"),
         ]);
+    }
+
+    protected function frozenIds($rows): array
+    {
+        return [];
+    }
+
+    protected function warnIds($rows): array
+    {
+        return [];
+    }
+
+    /** @return array{route:string,actions:array<int,array{value:string,label:string,confirm:string}>}|null */
+    protected function bulkActions(): ?array
+    {
+        return null;
     }
 
     public function create()

@@ -105,7 +105,8 @@ class ProductionTest extends TestCase
         $this->assertEquals(2500, $w->fresh()->balance());                       // earned − deduction
         $this->assertSame('deduction', WorkerAdjustment::first()->type);
         $this->get("/workers/{$w->id}")->assertOk()->assertSee('Deduction')->assertSee('stains');
-        $this->assertEquals(2500, Finance::profitLoss('2026-10-01', '2026-10-31')['costs']);
+        $this->assertEquals(0, Finance::profitLoss('2026-10-01', '2026-10-31')['costs']);   // labour is a cost when PAID, nothing has been paid yet
+        $this->assertEquals(2500, $w->fresh()->earned('2026-10-01', '2026-10-31'));          // …but 2,500 is what is owed after the deduction
 
         // changing the amount updates the same adjustment; clearing it removes it
         $this->putJson("/production-rejects/{$r->id}", $base + ['deduct_amount' => 800])->assertOk();

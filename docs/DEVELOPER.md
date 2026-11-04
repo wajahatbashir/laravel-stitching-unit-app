@@ -60,3 +60,9 @@ CSRF on all forms (offline queue refreshes token); permission checked in every C
 - **Vendor payables:** credit expenses + `VendorPayment`; `Vendor::openBills()` FIFO; `Finance::vendorPayables()` / balance sheet.
 - **Documents:** `DocumentController` (`documents.pdf`, login required — no public links); share UI in `documents/_share.blade.php` (Alpine `shareDoc`, Web Share API → save PDF + wa.me text).
 - Tests: Backup, PeriodClose, TwoFactor, Production, VendorPayables, Documents (62 total).
+
+## Finance engine and reports (audit notes)
+- All money maths lives in `App\Support\Finance` (scope-safe: `withoutGlobalScopes()` on own-scoped models, so every user sees company totals). Key pieces: `cashBank()` / `cashMovements()` (cash book; same sources), `cashFlow()`, `invoiceBalances()` (per-invoice paid/balance → `receivables()`, `overpaid()`, `overdueReceivables()`), `vendorPayables()`, `workerBalances()`, `profitLoss()` (revenue invoiced; costs = expenses when bought + wages **paid**), `labourEarned()`, `previousDuePaid()`, `balanceSheet()`.
+- **Identity (balance sheet ↔ P&L):** `earned_BS = PLnet(all time, paid basis) + fixed assets − labour earned-but-unpaid − previous dues`; `balanceSheet()['recon']['difference']` must be 0 and is shown on the report.
+- `tests/Feature/FinanceAuditTest.php` is a hand-calculated month (every expected figure is in the class comment) and checks dashboard, every finance report, a restricted user, the overpaid-invoice case and the identity. Run it after touching `Finance` or `ReportController`.
+- Reports are `ReportController::r_<key>()` returning head / rows / totals / filters / note; register the key in `Perms::REPORTS` and add a migration that creates the `reports.<key>` permission for Admin.

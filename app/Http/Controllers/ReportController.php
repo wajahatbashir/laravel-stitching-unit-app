@@ -102,9 +102,19 @@ class ReportController extends Controller
         $rows = [];
         $by = [];
         $sum = 0;
+        $how = ['bank' => 0.0, 'cash' => 0.0, 'credit' => 0.0];
         foreach ($q->get() as $e) {
             $rows[] = [fmt_date($e->date), label($e->type), $e->category?->name ?: '—', $e->order?->order_no ?: '—', $e->title ?: '—',
-                $e->vendor?->name ?: ($e->payee ?: '—'), label($e->payment_mode), (float) $e->base_amount];
+                $e->vendor?->name ?: ($e->payee ?: '—'), $e->payment_mode === 'partial' ? __('Partly on credit') : label($e->payment_mode), (float) $e->base_amount];
+            $paid = ['bank' => 0.0, 'cash' => 0.0];
+            if ($e->payment_mode === 'partial') {
+                $paid[$e->paid_via === 'bank' ? 'bank' : 'cash'] = $e->paidNowBase();
+            } elseif (in_array($e->payment_mode, ['bank', 'cash', 'other'], true)) {
+                $paid[$e->payment_mode === 'bank' ? 'bank' : 'cash'] = (float) $e->base_amount;
+            }
+            $how['bank'] += $paid['bank'];
+            $how['cash'] += $paid['cash'];
+            $how['credit'] += $e->creditAmount();
             $by[$e->type] = ($by[$e->type] ?? 0) + $e->base_amount;
             $sum += $e->base_amount;
         }
@@ -113,6 +123,9 @@ class ReportController extends Controller
             $totals[label($k)] = $v;
         }
         $totals[__('Total')] = $sum;
+        $totals[__('— paid from the bank')] = round($how['bank'], 2);
+        $totals[__('— paid in cash')] = round($how['cash'], 2);
+        $totals[__('— bought on credit (owed to vendors until paid)')] = round($how['credit'], 2);
 
         return [
             'head' => [__('Date'), __('Type'), __('Category'), __('Order'), __('Details'), __('Vendor / Payee'), __('Via'), __('Amount')],
@@ -222,6 +235,103 @@ class ReportController extends Controller
         ];
     }
 
+    /** Cash book: every movement of the chosen account with a running balance, opening and closing (ties to the dashboard). */
+    private function r_cashbook(Request $r): array
+    {
+        $mode = $r->query('account') === 'cash' ? 'cash' : 'bank';
+        [$f, $t] = $this->dates($r);
+        $all = Finance::cashMovements($mode);
+        $day = fn ($m) => $m['date']->toDateString();
+
+        $opening = $f ? round($all->filter(fn ($m) => $day($m) < $f)->sum(fn ($m) => $m['in'] - $m['out']), 2) : 0.0;
+        $rows = $f ? [[fmt_date($f), __('Opening balance'), '', '', $opening]] : [];
+        $bal = $opening;
+        $in = $out = 0.0;
+        foreach ($all->filter(fn ($m) => (! $f || $day($m) >= $f) && (! $t || $day($m) <= $t)) as $m) {
+            $bal = round($bal + $m['in'] - $m['out'], 2);
+            $in += $m['in'];
+            $out += $m['out'];
+            $rows[] = [fmt_date($m['date']), $m['desc'], $m['in'] ?: '', $m['out'] ?: '', $bal];
+        }
+
+        return [
+            'head' => [__('Date'), __('Details'), __('Money in'), __('Money out'), __('Balance')],
+            'rows' => $rows, 'date' => true, 'moneyCols' => [2, 3, 4],
+            'totals' => [__('Opening balance') => $opening, __('Total in') => round($in, 2), __('Total out') => round($out, 2), __('Closing balance') => $bal],
+            'filters' => [$this->sel('account', 'Account', ['bank' => __('Bank'), 'cash' => __('Cash in hand')])],
+            'note' => __('Showing :a. Choose the account above. Cash taken from the bank appears as money out of the bank and money in to cash in hand.', ['a' => $mode === 'cash' ? __('Cash in hand') : __('Bank')]),
+        ];
+    }
+
+    /** Profit & loss month by month (whole calendar months; default: the last 12 months). */
+    private function r_monthly(Request $r): array
+    {
+        [$f, $t] = $this->dates($r);
+        $end = ($t ? \Carbon\Carbon::parse($t) : now())->endOfMonth();
+        $start = ($f ? \Carbon\Carbon::parse($f) : $end->copy()->subMonthsNoOverflow(11))->startOfMonth();
+        if ($start->diffInMonths($end) > 59) {
+            $start = $end->copy()->subMonthsNoOverflow(59)->startOfMonth();
+        }
+
+        $rows = [];
+        $tot = array_fill_keys(['revenue', 'exp', 'wages', 'costs', 'net', 'in', 'out'], 0.0);
+        for ($m = $start->copy(); $m->lte($end); $m->addMonthNoOverflow()) {
+            $a = $m->copy()->startOfMonth()->toDateString();
+            $b = $m->copy()->endOfMonth()->toDateString();
+            $pl = Finance::profitLoss($a, $b);
+            $cf = Finance::cashFlow($a, $b);
+            $rows[] = [$m->translatedFormat('F Y'), $pl['revenue'], $pl['expense_costs'], $pl['labour_costs'], $pl['costs'], $pl['net'], $pl['old_dues_paid'] ?: '', $cf['in'], $cf['out'], $cf['net']];
+            $tot['revenue'] += $pl['revenue']; $tot['exp'] += $pl['expense_costs']; $tot['wages'] += $pl['labour_costs'];
+            $tot['costs'] += $pl['costs']; $tot['net'] += $pl['net']; $tot['in'] += $cf['in']; $tot['out'] += $cf['out'];
+        }
+
+        return [
+            'head' => [__('Month'), __('Revenue (invoiced)'), __('Expenses'), __('Wages paid'), __('Total costs'), __('Net profit / loss'), __('of which old dues'), __('Money in'), __('Money out'), __('Net cash flow')],
+            'rows' => $rows, 'date' => true, 'moneyCols' => [1, 2, 3, 4, 5, 6, 7, 8, 9],
+            'totals' => [__('Revenue (invoiced)') => $tot['revenue'], __('Total costs') => $tot['costs'], __('Net profit / loss') => $tot['net'], __('Money in') => $tot['in'], __('Money out') => $tot['out'], __('Net cash flow') => round($tot['in'] - $tot['out'], 2)],
+            'filters' => [],
+            'note' => __('Whole calendar months. PROFIT: revenue is invoiced; costs are expenses (when bought, incl. credit purchases) plus wages, salaries and advances when paid. CASH: money in = customer payments (incl. advances) + investments; money out = expenses paid when bought, wages, vendor payments and withdrawals; moving cash to or from the bank is not counted. Wages paid is everything paid to workers (the column "of which old dues" shows the part that went toward dues from before the app).'),
+        ];
+    }
+
+    /** What customers owe: per customer, with ageing of the unpaid invoice amounts, plus advances held and overpayments. */
+    private function r_receivables(Request $r): array
+    {
+        $today = now()->startOfDay();
+        $byCustomer = Finance::invoiceBalances()->groupBy('customer_id');
+        $rows = [];
+        $t = array_fill_keys(['inv', 'rec', 'out', 'cur', 'd30', 'd60', 'd90', 'd90p', 'over', 'adv'], 0.0);
+
+        foreach (Customer::query()->when($r->customer_id, fn ($x, $v) => $x->where('id', $v))->orderBy('name')->get() as $c) {
+            $inv = $byCustomer[$c->id] ?? collect();
+            $b = ['cur' => 0.0, 'd30' => 0.0, 'd60' => 0.0, 'd90' => 0.0, 'd90p' => 0.0];
+            foreach ($inv->where('balance', '>', 0.004) as $i) {
+                $late = (int) $today->diffInDays(($i['due'] ?? $i['date'])->copy()->startOfDay(), false) * -1;   // days past due
+                $b[$late <= 0 ? 'cur' : ($late <= 30 ? 'd30' : ($late <= 60 ? 'd60' : ($late <= 90 ? 'd90' : 'd90p')))] += $i['balance'];
+            }
+            $row = ['inv' => $inv->sum('total'), 'rec' => $inv->sum('paid'), 'out' => array_sum($b),
+                'over' => $inv->sum(fn ($i) => max(0, -$i['balance'])), 'adv' => $c->advance()] + $b;
+            if (! $inv->count() && abs($row['adv']) < 0.004) {
+                continue;
+            }
+            $blank = fn ($v) => abs($v) < 0.004 ? '' : round($v, 2);      // zeros as blanks
+            $rows[] = [$c->name, $row['inv'], $row['rec'], $row['out'], $blank($row['cur']), $blank($row['d30']), $blank($row['d60']), $blank($row['d90']), $blank($row['d90p']), $blank($row['over']), $blank($row['adv'])];
+            foreach ($t as $k => $_) {
+                $t[$k] += $row[$k];
+            }
+        }
+
+        return [
+            'head' => [__('Customer'), __('Invoiced'), __('Received'), __('Outstanding'), __('Current'), '1–30 '.__('days late'), '31–60', '61–90', '90+',
+                __('Overpaid'), __('Advance held')],
+            'rows' => $rows, 'moneyCols' => range(1, 10),
+            'totals' => [__('Total outstanding') => $t['out'], __('Past due') => round($t['d30'] + $t['d60'] + $t['d90'] + $t['d90p'], 2),
+                __('Advances held (unused)') => $t['adv'], __('Overpaid (owed back / to apply)') => $t['over']],
+            'filters' => [$this->sel('customer_id', 'Customer', opts(Customer::class))],
+            'note' => __('As of today. Each invoice counts on its own, so one customer\'s overpayment never hides another customer\'s debt. Ageing runs from the due date, or the invoice date when there is none.'),
+        ];
+    }
+
     private function r_profit_loss(Request $r): array
     {
         [$f, $t] = $this->dates($r);
@@ -229,8 +339,10 @@ class ReportController extends Controller
 
         return [
             'head' => [__('Item'), __('Amount')], 'rows' => $pl['rows'], 'date' => true, 'moneyCols' => [1],
-            'totals' => [__('Total costs') => $pl['costs'], $pl['net'] >= 0 ? __('Net profit') : __('Net loss') => $pl['net']],
+            'totals' => [__('Total costs') => $pl['costs'], $pl['net'] >= 0 ? __('Net profit') : __('Net loss') => $pl['net'],
+                __('Memo: of the wages paid, toward dues from before the app') => $pl['old_dues_paid']],
             'filters' => [],
+            'note' => __('Revenue is what you invoiced in the period. Costs are expenses (counted when bought, including credit purchases) plus wages, salaries and advances when you pay them; work entered but not yet paid is not a cost until paid (the memo shows how much of the wages paid went toward dues from before the app). Advances received from customers are not revenue until invoiced.'),
         ];
     }
 
@@ -240,13 +352,20 @@ class ReportController extends Controller
         $rows = [
             [__('ASSETS'), ''],
             [__('Fixed assets (at cost)'), $b['fixed']], [__('Cash in hand'), $b['cash']], [__('Bank'), $b['bank']],
-            [__('Receivable from customers'), $b['recv']], [__('Advances held by workers'), $b['advances']],
+            [__('Receivable from customers'), $b['recv']], [__('Advances held by workers (paid ahead of work)'), $b['advances']],
             [__('Total assets'), $b['assets']],
             [__('LIABILITIES'), ''],
-            [__('Payable to workers'), $b['payable']], [__('Customer advances held (not yet applied to invoices)'), $b['custAdv']], [__('Payable to vendors (credit purchases)'), $b['vendors']],
+            [__('Payable to workers'), $b['payable']], [__('Customer advances held (not yet applied to invoices)'), $b['custAdv']], [__('Customer overpayments (received beyond the invoice)'), $b['overpaid']], [__('Payable to vendors (credit purchases)'), $b['vendors']],
             [__('NET WORTH (assets − liabilities)'), $b['net']],
             [__('Capital invested (net of withdrawals)'), $b['capital']],
             [__('Earnings retained in business'), $b['earned']],
+            [__('HOW EARNINGS RETAINED TIES TO THE PROFIT & LOSS'), ''],
+            [__('Net profit / loss since the start (Profit & Loss, all time)'), $b['recon']['pl']],
+            [__('Add: machinery / furniture bought (expensed in the P&L, kept as an asset here)'), $b['recon']['fixed']],
+            [__('Less: labour earned but not yet paid (a cost only when paid)'), -$b['recon']['labour_unpaid']],
+            [__('Less: dues owed to workers from before the app'), -$b['recon']['previous_due']],
+            [__('Earnings retained in business (matches the figure above)'), round($b['recon']['pl'] + $b['recon']['fixed'] - $b['recon']['labour_unpaid'] - $b['recon']['previous_due'], 2)],
+            [__('Unexplained difference (should be 0.00)'), $b['recon']['difference']],
         ];
 
         return ['head' => [__('Item'), __('Amount')], 'rows' => $rows, 'moneyCols' => [1], 'filters' => [],

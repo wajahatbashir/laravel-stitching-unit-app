@@ -47,6 +47,31 @@
         <label class="flex items-start gap-3 text-sm"><input type="checkbox" name="require_2fa_admins" value="1" @checked(biz('require_2fa_admins') === '1') class="mt-0.5 h-5 w-5 rounded border-slate-300 text-brand-700"><span><strong>{{ __('Require two-factor sign-in for admins') }}</strong><br><span class="text-xs text-slate-500">{{ __('Admins and the Super Admin must set up an authenticator app (Profile → Security) before they can use the system. Each person sets it up themselves; an admin who loses their phone and recovery codes can be reset from Users → Edit.') }}</span></span></label>
     </div>
 
+    {{-- which menu items are shown --}}
+    @php $hiddenMenu = \App\Support\Menu::hidden(); @endphp
+    <div class="card p-4 md:p-6" x-data="{ setAll(on) { $root.querySelectorAll('.menu-cb:not(:disabled)').forEach(c => c.checked = on) } }">
+        <div class="mb-1 flex flex-wrap items-center justify-between gap-2">
+            <h2 class="font-semibold">{{ __('Menu') }}</h2>
+            <div class="flex gap-2"><button type="button" class="btn btn-ghost btn-sm" @click="setAll(true)">{{ __('Show all') }}</button><button type="button" class="btn btn-ghost btn-sm" @click="setAll(false)">{{ __('Hide all optional') }}</button></div>
+        </div>
+        <p class="mb-3 text-xs text-slate-500">{{ __('Tick what you want in the side menu, the phone menu and the quick-add list. This only hides menu entries: what each person may open is still decided by Roles & permissions, and a hidden page can still be opened from a link. Dashboard and Settings are always shown.') }}</p>
+        <input type="hidden" name="menu_submitted" value="1">
+        <div class="grid gap-3 md:grid-cols-2">
+            @foreach (\App\Support\Menu::groups() as $g => $items)
+                <div class="rounded-xl p-3 ring-1 ring-slate-200">
+                    <p class="mb-2 text-[11px] font-semibold uppercase tracking-wider text-slate-400">{{ $g }}</p>
+                    @foreach ($items as $i)
+                        @php $locked = in_array($i[1], \App\Support\Menu::LOCKED, true); @endphp
+                        <label class="flex min-h-9 items-center gap-2 text-sm {{ $locked ? 'text-slate-400' : 'text-slate-700' }}">
+                            <input type="checkbox" name="menu[]" value="{{ $i[1] }}" class="menu-cb h-4 w-4 rounded border-slate-300 text-brand-700" @checked($locked || ! in_array($i[1], $hiddenMenu, true)) @disabled($locked)>
+                            <span>{{ $i[0] }}</span>@if ($locked)<span class="text-[11px]">({{ __('always shown') }})</span>@endif
+                        </label>
+                    @endforeach
+                </div>
+            @endforeach
+        </div>
+    </div>
+
     <div class="card overflow-x-auto">
         <div class="border-b px-4 py-3"><h2 class="font-semibold">{{ __('Notifications') }}</h2><p class="text-xs text-slate-500">{{ __('Choose which events notify the admins, and on which channel.') }}</p></div>
         <table class="min-w-full">

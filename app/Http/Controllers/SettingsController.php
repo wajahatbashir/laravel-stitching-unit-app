@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\NotificationSetting;
 use App\Models\Setting;
 use App\Support\Brand;
+use App\Support\Menu;
 use Database\Seeders\DatabaseSeeder;
 use Illuminate\Http\Request;
 
@@ -47,6 +48,9 @@ class SettingsController extends Controller
         }
         Setting::put('low_stock_alerts', $r->boolean('low_stock_alerts') ? '1' : '0');
         Setting::put('require_2fa_admins', $r->boolean('require_2fa_admins') ? '1' : '0');
+        if ($r->boolean('menu_submitted')) {                      // only when the Menu section was part of the form
+            Menu::saveShown((array) $r->input('menu', []));
+        }
 
         foreach (array_keys(DatabaseSeeder::EVENTS) as $e) {
             foreach (['database', 'mail', 'whatsapp'] as $ch) {

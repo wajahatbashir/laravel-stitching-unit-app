@@ -134,7 +134,8 @@ class WorkerDueTest extends TestCase
         $this->assertEquals(33000, $payable);                                         // 8,000 + 30,000 − 5,000 owed to the worker
         $this->assertEquals(0, $advances);
         $this->assertEquals(33000, Finance::balanceSheet()['payable']);               // shows as payable on the balance sheet
-        $this->assertEquals(30000, Finance::profitLoss('2026-10-01', '2026-10-31')['costs']);   // …but only the October salary is a cost
+        $this->assertEquals(5000, Finance::profitLoss('2026-10-01', '2026-10-31')['costs']);    // …a cost only when paid: the 5,000 advance (it happens to go toward the old due), not the unpaid salary
+        $this->assertEquals(5000, Finance::previousDuePaid('2026-10-01', '2026-10-31'));       // information: that 5,000 settled part of the old due
         $this->get('/dashboard')->assertOk()->assertSee('Rs 33,000.00');
     }
 

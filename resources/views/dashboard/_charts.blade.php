@@ -102,7 +102,7 @@
                     </div>
                 @endforeach
             </div>
-            <p class="mt-3 text-[11px] text-slate-400">{{ __('Includes piece-rate wages and salaries. Hover a bar for the exact amount.') }}</p>
+            <p class="mt-3 text-[11px] text-slate-400">{{ __('Wages and salaries are counted on the day they are paid. Hover a bar for the exact amount.') }}</p>
         @endif
     </section>
 </div>
