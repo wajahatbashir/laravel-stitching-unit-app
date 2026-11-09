@@ -35,6 +35,17 @@ class Expense extends Model
 
     public function category() { return $this->belongsTo(ExpenseCategory::class, 'category_id'); }
     public function order() { return $this->belongsTo(Order::class); }
+    /** Orders sharing this purchase (only when it covers 2+ orders; pivot: amount, base_amount). */
+    public function sharedOrders() { return $this->belongsToMany(Order::class, 'expense_orders')->withPivot('amount', 'base_amount')->withTimestamps(); }
+
+    /** "SWA-0006" for one order, "SWA-0006, HUM-0002" for a shared purchase. */
+    public function orderNumbers(): string
+    {
+        return $this->order_id
+            ? (string) $this->order?->order_no
+            : $this->sharedOrders->sortBy('order_no')->pluck('order_no')->implode(', ');
+    }
+
     public function asset() { return $this->belongsTo(Asset::class); }
     public function vendor() { return $this->belongsTo(Vendor::class); }
     public function currency() { return $this->belongsTo(Currency::class); }

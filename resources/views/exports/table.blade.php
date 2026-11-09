@@ -9,6 +9,8 @@
     td { padding: 4px 5px; border-bottom: 1px solid #eee; }
     .tot { margin-top: 12px; width: auto; }
     .tot td { border: 0; padding: 2px 10px 2px 0; font-weight: bold; }
+    .tot td.v { text-align: right; }
+    .tot tr.last td { border-top: 1px solid #222; padding-top: 4px; }
 </style></head>
 <body>
 <h1>{{ biz('business_name') }} — {{ $title }}</h1>
@@ -18,6 +20,6 @@
     @foreach ($rows as $r)<tr>@foreach ($r as $c)<td>{{ is_numeric($c) && ! is_int($c) ? number_format($c, 2) : $c }}</td>@endforeach</tr>@endforeach
 </table>
 @if ($totals)
-    <table class="tot">@foreach ($totals as $k => $v)<tr><td>{{ $k }}</td><td>{{ is_numeric($v) ? number_format($v, 2) : $v }}</td></tr>@endforeach</table>
+    <table class="tot">@foreach ($totals as $k => $v)<tr @if ($loop->last && $loop->count > 1) class="last" @endif><td>{{ $k }}</td><td class="v">{{ is_numeric($v) ? number_format($v, 2) : $v }}</td></tr>@endforeach</table>
 @endif
 </body></html>

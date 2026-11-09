@@ -20,6 +20,8 @@ class CustomerController extends CrudController
     {
         return [
             $this->f('name', 'Customer name', 'text', ['required' => true]),
+            $this->f('order_code', 'Order code', 'text', ['rules' => 'nullable|alpha_num|max:8|unique:customers,order_code'.($m ? ",{$m->id}" : ''),
+                'help' => __('Short code for this customer\'s order numbers, e.g. SWA → SWA-0001, SWA-0002. Leave empty to create one from the name. Changing it affects new orders only.')]),
             $this->f('contact_person', 'Contact person'),
             $this->f('phone', 'Phone', 'tel'),
             $this->f('email', 'Email', 'email', ['rules' => 'nullable|email']),
@@ -33,11 +35,20 @@ class CustomerController extends CrudController
     {
         return [
             [__('Name'), 'name'],
+            [__('Code'), 'order_code'],
             [__('Phone'), 'phone'],
             [__('Orders'), fn ($r) => $r->orders()->count()],
             [__('Receivable'), fn ($r) => $r->receivable(), ['money' => true]],
             [__('Advance held'), fn ($r) => $r->advance(), ['money' => true]],
         ];
+    }
+
+    protected function prepare(array $data, ?Model $m, \Illuminate\Http\Request $r): array
+    {
+        $code = strtoupper(trim((string) ($data['order_code'] ?? '')));
+        $data['order_code'] = $code !== '' ? $code : ($m?->order_code ?: Customer::suggestCode($data['name'], $m?->id));
+
+        return $data;
     }
 
     public function show($id)

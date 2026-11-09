@@ -115,6 +115,10 @@ abstract class CrudController extends Controller
         foreach ($this->filters() as $f) {
             $v = $r->query($f['name']);
             if ($v !== null && $v !== '') {
+                if (isset($f['apply'])) {          // custom filter: closure(Builder $q, $value)
+                    ($f['apply'])($q, $v);
+                    continue;
+                }
                 empty($f['like'])
                     ? $q->where($f['column'] ?? $f['name'], $v)
                     : $q->where($f['column'] ?? $f['name'], 'like', "%$v%");
@@ -375,6 +379,12 @@ abstract class CrudController extends Controller
         $head = array_map(fn ($c) => $c[0], $cols);
         $data = $rows->map(fn ($row) => array_map(fn ($c) => cell_text($row, $c), $cols))->all();
 
-        return TableExport::respond($this->title, $head, $data, $fmt);
+        return TableExport::respond($this->title, $head, $data, $fmt, $this->exportTotals($rows));
+    }
+
+    /** Summary lines under an exported list (label => value); none by default. */
+    protected function exportTotals($rows): array
+    {
+        return [];
     }
 }

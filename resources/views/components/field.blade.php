@@ -14,6 +14,20 @@
 @endphp
 @if ($type === 'hidden')
     <input type="hidden" name="{{ $n }}" value="{{ $val }}">
+@elseif ($type === 'checks')
+    @php $chosen = array_map('strval', (array) ($val === '' ? [] : $val)); @endphp
+    <div class="{{ $span }}">
+        <span class="label">{{ $f['label'] }}@if($req)<span class="text-rose-600"> *</span>@endif</span>
+        <div class="flex flex-wrap gap-2">
+            @foreach ($f['options'] as $k => $l)
+                <label class="flex min-h-11 cursor-pointer items-center gap-2 rounded-xl bg-white px-3 text-sm font-medium ring-1 ring-slate-300 has-[:checked]:bg-brand-50 has-[:checked]:ring-brand-500">
+                    <input type="checkbox" name="{{ $n }}[]" value="{{ $k }}" class="h-5 w-5 rounded border-slate-300 text-brand-700 focus:ring-brand-500" @checked(in_array((string) $k, $chosen, true))>{{ $l }}
+                </label>
+            @endforeach
+        </div>
+        @if (! empty($f['help']))<p class="mt-1 text-xs text-slate-500">{{ $f['help'] }}</p>@endif
+        @if ($err)<p class="mt-1 text-xs font-medium text-rose-600">{{ $err }}</p>@endif
+    </div>
 @elseif ($type === 'checkbox')
     <label class="flex min-h-11 items-center gap-3 {{ $span }}">
         <input type="hidden" name="{{ $n }}" value="0">

@@ -23,6 +23,9 @@
         <dl class="mt-4 grid grid-cols-2 gap-3 md:grid-cols-3">
             {!! $row(__('Category'), $e->category?->name) !!}
             @if ($e->order)<div><dt class="text-xs text-slate-400">{{ __('Order') }}</dt><dd class="text-sm"><a class="text-brand-700 underline" href="{{ route('orders.show', $e->order) }}">{{ $e->order->order_no }}</a> · {{ $e->order->customer?->name }}</dd></div>@endif
+            @if ($e->sharedOrders->isNotEmpty())<div class="col-span-2"><dt class="text-xs text-slate-400">{{ __('Shared by orders') }}</dt><dd class="mt-1 space-y-0.5 text-sm">
+                @foreach ($e->sharedOrders->sortBy('order_no') as $so)<p class="flex justify-between gap-3"><span><a class="text-brand-700 underline" href="{{ route('orders.show', $so) }}">{{ $so->order_no }}</a> · {{ $so->customer?->name }}</span><span class="tabular-nums">{{ money($so->pivot->base_amount) }}</span></p>@endforeach
+            </dd></div>@endif
             @if ($e->asset)<div><dt class="text-xs text-slate-400">{{ __('Asset') }}</dt><dd class="text-sm"><a class="text-brand-700 underline" href="{{ route('assets.show', $e->asset) }}">{{ $e->asset->name }}</a></dd></div>@endif
             {!! $row(__('Vendor'), $e->vendor?->name) !!}
             {!! $row(__('Paid to'), $e->payee) !!}

@@ -30,8 +30,9 @@ class OrderController extends CrudController
     protected function fields(?Model $m = null): array
     {
         return [
-            $this->f('order_no', 'Order number', 'text', ['required' => true, 'default' => Order::nextNumber(),
-                'rules' => $m ? "unique:orders,order_no,{$m->id}" : 'string|max:50']),
+            $this->f('order_no', 'Order number', 'text', ['required' => (bool) $m,
+                'help' => $m ? null : __('Fills in by itself when you choose the customer (e.g. SWA-0007). You can type your own.'),
+                'rules' => $m ? "unique:orders,order_no,{$m->id}" : 'nullable|string|max:50']),
             $this->f('date', 'Order date', 'date', ['required' => true, 'default' => now()->toDateString()]),
             $this->f('customer_id', 'Customer', 'select', ['required' => true, 'options' => opts(Customer::class)]),
             $this->f('brand_id', 'Brand', 'select', ['rules' => 'nullable|exists:brands,id', 'help' => __('Pick the brand. Missing one? Add it under Admin → Brands.'),
@@ -79,7 +80,7 @@ class OrderController extends CrudController
     protected function prepare(array $data, ?Model $m, Request $r): array
     {
         if (! $m && (empty($data['order_no']) || Order::withoutGlobalScopes()->where('order_no', $data['order_no'])->exists())) {
-            $data['order_no'] = Order::nextNumber(); // offline-created forms may carry a stale number
+            $data['order_no'] = Order::nextNumber((int) ($data['customer_id'] ?? 0) ?: null); // empty, or an offline-created form with a stale number
         }
         $data['rate'] = $data['rate'] ?? 0;
         if (empty($data['amount'])) {
@@ -100,17 +101,31 @@ class OrderController extends CrudController
 
     protected function beforeDelete(Model $m): ?string
     {
-        return $m->expenses()->withoutGlobalScopes()->exists() || $m->workEntries()->withoutGlobalScopes()->exists() || $m->invoices()->exists()
+        return $m->expenses()->withoutGlobalScopes()->exists() || $m->sharedExpenses()->exists() || $m->workEntries()->withoutGlobalScopes()->exists() || $m->invoices()->exists()
             ? __('Order has expenses, work entries or invoices; set status to cancelled instead.') : null;
+    }
+
+    /** GET /orders/next-number?customer_id= — used by the order form to fill the number when a customer is picked. */
+    public function nextNumber(Request $r)
+    {
+        $this->authorizeAction('create');
+
+        return response()->json(['order_no' => Order::nextNumber($r->integer('customer_id') ?: null)]);
     }
 
     public function show($id)
     {
         $this->authorizeAction('view');
         $o = Order::with('customer', 'attachments', 'invoices')->findOrFail($id);
-        $expenses = $o->expenses()->withoutGlobalScopes()->with('category')->orderBy('date')->get();
+        // own purchases + this order's share of purchases bought together with other orders
+        $expenses = $o->expenses()->withoutGlobalScopes()->with('category')->get()
+            ->merge($o->sharedExpenses()->with('category', 'sharedOrders')->get()->each(function ($e) {
+                $e->setAttribute('share_total', $e->base_amount);
+                $e->setAttribute('base_amount', $e->pivot->base_amount);
+                $e->setAttribute('shared_with', $e->sharedOrders->sortBy('order_no')->pluck('order_no')->implode(', '));
+            }))->sortBy('date')->values();
         $work = $o->workEntries()->withoutGlobalScopes()->with('worker', 'garmentType')->orderBy('date')->get();
-        $material = (float) $expenses->sum('base_amount');
+        $material = $o->materialCost();
         $labour = (float) $work->sum('amount');
 
         return view('orders.show', compact('o', 'expenses', 'work', 'material', 'labour') + [

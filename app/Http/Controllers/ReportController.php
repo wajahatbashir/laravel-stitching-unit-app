@@ -92,10 +92,10 @@ class ReportController extends Controller
 
     private function r_expenses(Request $r): array
     {
-        $q = $this->inRange(Expense::withoutGlobalScopes()->with('category', 'order', 'vendor'), $r)
+        $q = $this->inRange(Expense::withoutGlobalScopes()->with('category', 'order', 'sharedOrders', 'vendor'), $r)
             ->when($r->type, fn ($x, $v) => $x->where('type', $v))
             ->when($r->category_id, fn ($x, $v) => $x->where('category_id', $v))
-            ->when($r->order_id, fn ($x, $v) => $x->where('order_id', $v))
+            ->when($r->order_id, fn ($x, $v) => $x->where(fn ($w) => $w->where('order_id', $v)->orWhereIn('id', \Illuminate\Support\Facades\DB::table('expense_orders')->where('order_id', $v)->select('expense_id'))))
             ->when($r->vendor_id, fn ($x, $v) => $x->where('vendor_id', $v))
             ->when($r->payment_mode, fn ($x, $v) => $x->where('payment_mode', $v))
             ->orderBy('date');
@@ -104,7 +104,7 @@ class ReportController extends Controller
         $sum = 0;
         $how = ['bank' => 0.0, 'cash' => 0.0, 'credit' => 0.0];
         foreach ($q->get() as $e) {
-            $rows[] = [fmt_date($e->date), label($e->type), $e->category?->name ?: '—', $e->order?->order_no ?: '—', $e->title ?: '—',
+            $rows[] = [fmt_date($e->date), label($e->type), $e->category?->name ?: '—', $e->orderNumbers() ?: '—', $e->title ?: '—',
                 $e->vendor?->name ?: ($e->payee ?: '—'), $e->payment_mode === 'partial' ? __('Partly on credit') : label($e->payment_mode), (float) $e->base_amount];
             $paid = ['bank' => 0.0, 'cash' => 0.0];
             if ($e->payment_mode === 'partial') {

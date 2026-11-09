@@ -34,7 +34,7 @@
         <div class="border-b px-4 py-3 font-semibold">{{ __('Expenses on this order') }}</div>
         @forelse ($expenses as $e)
             <div class="flex items-center justify-between gap-3 border-b px-4 py-2.5 text-sm last:border-0">
-                <div class="min-w-0"><p class="truncate font-medium">{{ $e->category?->name }} @if ($e->title && $e->title !== $e->category?->name) — {{ $e->title }} @endif</p><p class="text-xs text-slate-400">{{ fmt_date($e->date) }} @if ($e->payee) · {{ $e->payee }} @endif</p></div>
+                <div class="min-w-0"><p class="truncate font-medium">{{ $e->category?->name }} @if ($e->title && $e->title !== $e->category?->name) — {{ $e->title }} @endif</p><p class="text-xs text-slate-400">{{ fmt_date($e->date) }} @if ($e->payee) · {{ $e->payee }} @endif @if ($e->shared_with ?? null) · {{ __('this order\'s share of') }} {{ money($e->share_total) }} {{ __('bought for') }} {{ $e->shared_with }} @endif</p></div>
                 <span class="shrink-0 tabular-nums">{{ money($e->base_amount) }}</span>
             </div>
         @empty <p class="p-4 text-sm text-slate-500">{{ __('No expenses yet.') }}</p> @endforelse

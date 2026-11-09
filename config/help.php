@@ -19,13 +19,13 @@ return [
     'orders' => ['group' => 'Business', 'title' => 'Orders', 'route' => 'orders.index', 'perm' => 'orders.view',
         'purpose' => 'Bulk stitching jobs from your clients (brands): what was ordered, by when, and what it cost.',
         'how' => ['Add an order: customer, brand (pick from the list), collection (type it), fabric, quantity, rate, due date and photos.',
-            'Open an order to see costs (materials + labour), production progress, deliveries and profit.',
+            'The order number fills in by itself when you choose the customer and runs on that customer\'s own sequence (SWA-0006, SWA-0007 …).', 'Open an order to see costs (materials + labour), production progress, deliveries and profit.',
             'Use Filters to find orders by customer, brand, collection, fabric, status or date.'],
         'tips' => ['Expenses and work entries linked to an order are what make its profit figure correct.']],
 
     'customers' => ['group' => 'Business', 'title' => 'Customers', 'route' => 'customers.index', 'perm' => 'customers.view',
         'purpose' => 'The brands you work for, with what they owe you and any advance you hold.',
-        'how' => ['Add a customer with phone and email.', 'Open a customer to see orders, invoices and every payment.',
+        'how' => ['Add a customer with phone and email. The Order code (e.g. SWA) starts that customer\'s order numbers; leave it empty to create one from the name.', 'Open a customer to see orders, invoices and every payment.',
             'Pick a period and press PDF / Share / Email to send a statement.'],
         'tips' => ['A customer with orders or invoices can only be deactivated, not deleted.']],
 
@@ -65,8 +65,9 @@ return [
     'expenses' => ['group' => 'Expenses', 'title' => 'Expenses', 'route' => 'expenses.index', 'perm' => 'expenses.view',
         'purpose' => 'Every rupee spent: order materials, unit purchases, labour extras and other costs.',
         'how' => ['Choose the type: Order, Unit, Labour or Other.', 'Upload a payment receipt and the amount, date and payee are read for you; always check them.',
-            'Pick On credit to buy now and pay later, or Partly on credit to pay some now and the rest later (vendor required; Paid to is switched off only for fully-on-credit).'],
-        'tips' => ['Order expenses need an order so profit per order is right.']],
+            'Pick On credit to buy now and pay later, or Partly on credit to pay some now and the rest later (vendor required; Paid to is switched off only for fully-on-credit).',
+            'Bought material for several orders together? On an Order expense tick all of them (only in-progress orders are listed; or press Select all in-progress orders): the amount is split between the orders by pieces or equally, and you can type each share.'],
+        'tips' => ['Order expenses need at least one order so profit per order is right.', 'A shared purchase is still ONE expense (one receipt, one payment, one vendor bill); only the cost of each order is split.']],
 
     'vendors' => ['group' => 'Expenses', 'title' => 'Vendors', 'route' => 'vendors.index', 'perm' => 'vendors.view',
         'purpose' => 'Suppliers (lace, fabric, etc.) and what you owe each of them.',
@@ -159,7 +160,7 @@ return [
 
     'categories' => ['group' => 'Admin', 'title' => 'Expense categories', 'route' => 'categories.index', 'perm' => 'master.view',
         'purpose' => 'The category lists used on expenses, per type.',
-        'how' => ['Add or deactivate categories. One in use cannot be deleted.'], 'tips' => []],
+        'how' => ['Add a category and tick every expense type it is used under (Order, Unit, Labour, Other) — e.g. Embellishment for both Order and Labour.', 'Deactivate a category to hide it from new expenses. One in use cannot be deleted.'], 'tips' => ['A name exists only once: to use a category under another type, open it and tick the extra type instead of creating it again.', 'A type cannot be unticked while expenses of that type still use the category.']],
 
     'brands' => ['group' => 'Admin', 'title' => 'Brands', 'route' => 'brands.index', 'perm' => 'master.view',
         'purpose' => 'The list of brands (Maria.B., Noore, Parishay…) offered in the order form.',

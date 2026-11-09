@@ -92,6 +92,7 @@ Route::middleware(['auth', \App\Http\Middleware\EnsureTwoFactor::class])->group(
     Route::view('/sync', 'sync')->name('sync');
 
     // extra (non-resource) routes — declared before the resources they could clash with
+    Route::get('/orders/next-number', [OrderController::class, 'nextNumber'])->name('orders.next-number');
     Route::post('/expenses/ocr', [ExpenseController::class, 'ocr'])->name('expenses.ocr');
     Route::post('/work-entries/bulk', [WorkEntryController::class, 'bulk'])->name('work-entries.bulk');
     Route::post('/salaries/generate', [SalaryEntryController::class, 'generate'])->name('salaries.generate');

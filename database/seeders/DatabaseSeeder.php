@@ -83,7 +83,7 @@ class DatabaseSeeder extends Seeder
         ];
         foreach ($cats as $type => $names) {
             foreach ($names as $n) {
-                ExpenseCategory::firstOrCreate(['type' => $type, 'name' => $n]);
+                ExpenseCategory::firstOrCreate(['name' => $n], ['type' => $type, 'types' => [$type]]);   // matched by name so a name never exists twice
             }
         }
 

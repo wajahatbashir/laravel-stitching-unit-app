@@ -149,7 +149,7 @@ class SmokeTest extends TestCase
         $this->post('/vendors', ['name' => 'Lace House'])->assertRedirect('/vendors');
         $this->post('/investors', ['name' => 'Partner'])->assertRedirect('/investors');
         $this->post('/garments', ['name' => 'Frock', 'default_rate' => 200])->assertRedirect('/garments');
-        $this->post('/categories', ['type' => 'order', 'name' => 'Pearls'])->assertRedirect('/categories');
+        $this->post('/categories', ['types' => ['order'], 'name' => 'Pearls'])->assertRedirect('/categories');
         $this->post('/custom-fields', ['label' => 'Machine colour', 'type' => 'text'])->assertRedirect('/custom-fields');
         $this->post('/workers', ['name' => 'Rubina', 'type' => 'freelancer', 'pay_cycle' => 'weekly'])->assertRedirect('/workers');
         $this->post('/inventory-items', ['name' => 'Lace', 'unit' => 'meter'])->assertRedirect('/inventory-items');

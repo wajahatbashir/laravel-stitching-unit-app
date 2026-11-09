@@ -55,8 +55,8 @@ class VendorController extends CrudController
 
         $status = \App\Support\VendorBills::map($v->id);
         $lines = collect();
-        foreach ($v->creditBills()->with('order')->get() as $e) {
-            $lines->push(['date' => $e->date, 'o' => 0, 'desc' => __('Bill').': '.($e->title ?: ($e->category?->name ?: label($e->type))).($e->order ? ' ('.$e->order->order_no.')' : '')
+        foreach ($v->creditBills()->with('order', 'sharedOrders')->get() as $e) {
+            $lines->push(['date' => $e->date, 'o' => 0, 'desc' => __('Bill').': '.($e->title ?: ($e->category?->name ?: label($e->type))).($e->orderNumbers() ? ' ('.$e->orderNumbers().')' : '')
                 .($e->payment_mode === 'partial' ? ' · '.__('credit part of :t, :p paid at purchase', ['t' => money($e->base_amount), 'p' => money($e->paidNowBase())]) : '')
                 .($e->due_date ? ' · '.__('due').' '.fmt_date($e->due_date) : ''), 'bill' => $e->creditAmount(), 'paid' => 0.0, 'id' => $e->id, 'status' => $status[$e->id]['status'] ?? null]);
         }

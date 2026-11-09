@@ -13,6 +13,18 @@ class Customer extends Model
 
     protected $casts = ['is_active' => 'boolean'];
 
+    /** Suggested order code from a name: first 3 letters/digits, made unique (SWA, HUM, HUM2 …). */
+    public static function suggestCode(string $name, ?int $ignoreId = null): string
+    {
+        $base = strtoupper(substr(preg_replace('/[^A-Za-z0-9]/', '', $name), 0, 3)) ?: 'CUS';
+        $code = $base;
+        for ($i = 2; static::withoutGlobalScopes()->where('order_code', $code)->when($ignoreId, fn ($q) => $q->whereKeyNot($ignoreId))->exists(); $i++) {
+            $code = $base.$i;
+        }
+
+        return $code;
+    }
+
     public function orders() { return $this->hasMany(Order::class); }
     public function invoices() { return $this->hasMany(Invoice::class); }
     public function payments() { return $this->hasMany(CustomerPayment::class); }

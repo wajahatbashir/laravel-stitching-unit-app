@@ -13,7 +13,7 @@
         'amount' => old('amount', $m?->amount),
         'date' => old('date', $m?->date?->format('Y-m-d') ?? now()->toDateString()),
         'payee' => old('payee', $m?->payee),
-        'mode' => old('payment_mode', $m?->payment_mode ?? 'cash'),
+        'mode' => old('payment_mode', $m?->payment_mode ?? 'bank'),
         'paidNow' => old('paid_now', $m?->paid_now),
         'ocr_text' => old('ocr_text', ''),
         'cats' => $extra['categories'],
@@ -22,6 +22,12 @@
         'fileName' => '',
         'removeReceipt' => false,
         'note' => '',
+        // which orders this purchase is for (several = split the amount between them)
+        'orders' => $extra['orderPicker']['orders'],
+        'picked' => $extra['orderPicker']['picked'],
+        'shares' => $extra['orderPicker']['shares'],
+        'splitBy' => 'qty',
+        'autoSplit' => count($extra['orderPicker']['picked']) < 2,   // an already-saved split is kept until you press a split button
     ];
     $types = ['order' => __('Order'), 'unit' => __('Unit'), 'labour' => __('Labour'), 'other' => __('Other')];
 @endphp
@@ -94,17 +100,57 @@
                 <label class="label">{{ __('Category') }}</label>
                 <select name="category_id" class="input" x-model="category">
                     <option value="">—</option>
-                    <template x-for="c in cats.filter(c => c.type === type)" :key="c.id"><option :value="c.id" x-text="c.name" :selected="String(c.id) === String(category)"></option></template>
+                    <template x-for="c in cats.filter(c => c.types.includes(type))" :key="c.id"><option :value="c.id" x-text="c.name" :selected="String(c.id) === String(category)"></option></template>
                 </select>
             </div>
 
-            <div x-show="type === 'order'">
-                <label class="label">{{ __('Order') }} <span class="text-rose-600">*</span></label>
-                <select name="order_id" class="input" :disabled="type !== 'order'">
-                    <option value="">— {{ __('Select') }} —</option>
-                    @foreach ($F['order_id']['options'] as $k => $l)<option value="{{ $k }}" @selected((string) old('order_id', $m?->order_id ?? request('order_id')) === (string) $k)>{{ $l }}</option>@endforeach
-                </select>
+            {{-- Which orders is this purchase for? One order = as before; several = the amount is split between them --}}
+            <div x-show="type === 'order'" x-cloak class="md:col-span-2">
+                <div class="flex flex-wrap items-center justify-between gap-2">
+                    <label class="label !mb-0">{{ __('Orders this purchase is for') }} <span class="text-rose-600">*</span></label>
+                    <div class="flex gap-2 text-xs font-semibold">
+                        <button type="button" class="text-brand-700 underline" @click="pickActive()">{{ __('Select all in-progress orders') }}</button>
+                        <button type="button" class="text-slate-500 underline" @click="picked = []; rebalance()">{{ __('Clear') }}</button>
+                    </div>
+                </div>
+                <p class="mb-2 text-xs text-slate-500">{{ __('Buying material for several orders together? Tick them all — the amount is split between them (by pieces, or type each amount). Only in-progress orders are listed.') }}</p>
+                <div class="max-h-64 divide-y divide-slate-100 overflow-y-auto rounded-xl ring-1 ring-slate-200">
+                    <template x-for="o in orders" :key="o.id">
+                        <label class="flex min-h-11 cursor-pointer items-center gap-3 px-3 py-2 text-sm hover:bg-brand-50/50" :class="picked.includes(o.id) && 'bg-brand-50'">
+                            <input type="checkbox" class="h-5 w-5 rounded border-slate-300 text-brand-700 focus:ring-brand-500" :checked="picked.includes(o.id)" @change="toggle(o.id)">
+                            <span class="min-w-0 flex-1"><span class="font-semibold" x-text="o.no"></span> <span class="text-slate-500" x-text="'· ' + o.customer + (o.what ? ' · ' + o.what : '')"></span></span>
+                            <span class="shrink-0 text-xs tabular-nums text-slate-500" x-text="o.qty + ' {{ __('pcs') }}'"></span>
+                            <span class="shrink-0 rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-600" x-text="o.statusLabel"></span>
+                        </label>
+                    </template>
+                    <p x-show="!orders.length" class="p-3 text-sm text-slate-500">{{ __('No in-progress orders. Set the order\'s status to In progress first.') }}</p>
+                </div>
+                <template x-if="type === 'order'"><div>
+                    <template x-for="id in picked" :key="'h' + id"><input type="hidden" name="order_ids[]" :value="id"></template>
+
+                    <div x-show="picked.length > 1" x-cloak class="mt-3 rounded-xl bg-slate-50 p-3 ring-1 ring-slate-200">
+                        <div class="mb-2 flex flex-wrap items-center justify-between gap-2">
+                            <p class="text-sm font-semibold">{{ __('Share of each order') }}</p>
+                            <div class="flex gap-2">
+                                <button type="button" class="btn btn-ghost btn-sm" :class="autoSplit && splitBy === 'qty' && 'ring-2 ring-brand-500'" @click="splitBy = 'qty'; autoSplit = true; rebalance()">{{ __('Split by pieces') }}</button>
+                                <button type="button" class="btn btn-ghost btn-sm" :class="autoSplit && splitBy === 'equal' && 'ring-2 ring-brand-500'" @click="splitBy = 'equal'; autoSplit = true; rebalance()">{{ __('Split equally') }}</button>
+                            </div>
+                        </div>
+                        <template x-for="o in orders.filter(o => picked.includes(o.id))" :key="'s' + o.id">
+                            <div class="flex items-center gap-3 py-1 text-sm">
+                                <span class="min-w-0 flex-1 truncate"><span class="font-semibold" x-text="o.no"></span> <span class="text-slate-500" x-text="'· ' + o.qty + ' {{ __('pcs') }}'"></span></span>
+                                <input type="number" step="0.01" min="0" inputmode="decimal" class="input !w-36 text-end tabular-nums" :name="'shares[' + o.id + ']'" x-model="shares[o.id]" @input="autoSplit = false">
+                            </div>
+                        </template>
+                        <p class="mt-2 text-sm font-medium" :class="Math.abs(left()) < 0.01 ? 'text-emerald-700' : 'text-rose-600'">
+                            {{ __('Given to orders') }}: <span class="tabular-nums" x-text="num(given())"></span> / <span class="tabular-nums" x-text="num(amount)"></span>
+                            <span x-show="Math.abs(left()) >= 0.01" x-text="'(' + (left() > 0 ? '{{ __('still to give') }} ' : '{{ __('too much by') }} ') + num(Math.abs(left())) + ')'"></span>
+                            <span x-show="Math.abs(left()) < 0.01">✓</span>
+                        </p>
+                    </div>
+                </div></template>
                 @error('order_id')<p class="mt-1 text-xs text-rose-600">{{ $message }}</p>@enderror
+                @error('order_ids')<p class="mt-1 text-xs text-rose-600">{{ $message }}</p>@enderror
             </div>
 
             <div x-show="type === 'unit'">
@@ -192,6 +238,30 @@
 function expenseForm(init) {
     return {
         ...init,
+        init() {
+            this.$watch('amount', () => this.rebalance());
+            this.$watch('picked', () => this.rebalance());
+        },
+        toggle(id) { this.picked = this.picked.includes(id) ? this.picked.filter(i => i !== id) : [...this.picked, id]; },
+        pickActive() { this.picked = this.orders.filter(o => o.status === 'in_progress').map(o => o.id); },
+        given() { return this.picked.reduce((t, id) => t + (parseFloat(this.shares[id]) || 0), 0); },
+        left() { return Math.round(((parseFloat(this.amount) || 0) - this.given()) * 100) / 100; },
+        // fill the shares from the total: by pieces or equally; the last order takes the rounding difference
+        rebalance() {
+            if (this.picked.length < 2) return;
+            if (this.picked.some(id => this.shares[id] === undefined || this.shares[id] === '')) this.autoSplit = true;   // a newly ticked order → re-split
+            if (!this.autoSplit) return;
+            const list = this.orders.filter(o => this.picked.includes(o.id));
+            const total = Math.round((parseFloat(this.amount) || 0) * 100);
+            const w = list.map(o => this.splitBy === 'qty' ? Math.max(1, o.qty) : 1);
+            const sw = w.reduce((a, b) => a + b, 0);
+            let left = total;
+            list.forEach((o, i) => {
+                const cents = i === list.length - 1 ? left : Math.round(total * w[i] / sw);
+                left -= cents;
+                this.shares[o.id] = (cents / 100).toFixed(2);
+            });
+        },
         clearNew() {
             if (this.preview) URL.revokeObjectURL(this.preview);
             this.preview = null; this.fileName = ''; this.note = '';
