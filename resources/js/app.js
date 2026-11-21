@@ -3,6 +3,7 @@ import './bootstrap';
 import { initOffline } from './offline';
 import { setupDatepickers } from './datepicker';
 import { registerUi } from './ui';
+import { setupReceiptReader } from './receipt-reader';
 
 window.Alpine = Alpine;
 
@@ -24,6 +25,7 @@ document.addEventListener('keydown', (e) => {
 
 registerUi(Alpine); // theme store + header components must exist before Alpine starts
 setupDatepickers(); // before Alpine so x-model writes go through the picker
+setupReceiptReader(); // receipt inputs marked data-ocr fill amount / date / via
 Alpine.start();
 initOffline(Alpine.store('sync'));
 

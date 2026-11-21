@@ -83,7 +83,7 @@
                 <div class="col-span-2 flex items-end md:col-span-1"><button class="btn btn-primary w-full">{{ __('Pay') }}</button></div>
             </div>
             <div class="mt-3"><label class="label" for="quick_slip">{{ __('Payment receipt (bank app screenshot / photo)') }}</label>
-                <input id="quick_slip" type="file" name="receipt" accept="image/*,application/pdf" class="input file:me-3 file:rounded-lg file:border-0 file:bg-brand-100 file:px-3 file:py-1.5 file:text-sm file:font-semibold file:text-brand-800"></div>
+                <x-receipt-input id="quick_slip" /></div>
             <p class="mt-2 text-xs text-slate-500">{{ __('Pay less than the balance for a partial payment — the remainder stays on the ledger and carries to the next payment.') }}</p>
         </form>
     @endif

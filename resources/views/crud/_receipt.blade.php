@@ -8,8 +8,7 @@
         clearNew() { if (this.preview) URL.revokeObjectURL(this.preview); this.preview = null; this.fileName = ''; this.$refs.receipt.value = ''; } }">
     <label class="label" for="f_receipt">{{ __('Payment receipt (bank app screenshot / photo)') }}</label>
     {{-- no "capture" attribute: lets you pick a screenshot from the gallery OR take a photo --}}
-    <input id="f_receipt" type="file" name="receipt" x-ref="receipt" accept="image/*,application/pdf" @change="pick($event)"
-           class="input file:me-3 file:rounded-lg file:border-0 file:bg-brand-100 file:px-3 file:py-1.5 file:text-sm file:font-semibold file:text-brand-800">
+    <x-receipt-input id="f_receipt" x-ref="receipt" @change="pick($event)" />
 
     {{-- preview of the file just chosen --}}
     <div x-show="preview || fileName" x-cloak class="mt-3">
