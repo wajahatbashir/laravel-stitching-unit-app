@@ -9,6 +9,7 @@ use App\Models\WorkEntry;
 use App\Support\WorkPayStatus;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 class WorkEntryController extends CrudController
@@ -164,6 +165,56 @@ class WorkEntryController extends CrudController
         }
 
         return back()->with('success', $msg);
+    }
+
+    /**
+     * New entries come from the multi-order form (`lines[]`: order, garment, pieces, rate per line) — one work entry is saved
+     * per line, all for the same worker and date, in one transaction. Without `lines` (older forms / offline queue) the
+     * normal single-entry save runs.
+     */
+    public function store(Request $r)
+    {
+        if (! is_array($r->input('lines'))) {
+            return parent::store($r);
+        }
+        $this->authorizeAction('create');
+
+        $uuid = (string) $r->input('uuid');
+        if ($uuid !== '' && WorkEntry::withoutGlobalScopes()->where('uuid', $uuid)->exists()) {
+            return $this->done($r, 'Already saved.');   // an offline replay
+        }
+
+        $d = $r->validate([
+            'worker_id' => 'required|exists:workers,id',
+            'date' => 'required|date',
+            'notes' => 'nullable|string',
+            'status' => 'nullable|in:open,closed',
+            'lines' => 'required|array|min:1|max:30',
+            'lines.*.order_id' => 'nullable|exists:orders,id',
+            'lines.*.garment_type_id' => 'required|exists:garment_types,id',
+            'lines.*.qty' => 'required|integer|min:1',
+            'lines.*.rate' => 'nullable|numeric|min:0',
+        ]);
+
+        $worker = Worker::findOrFail($d['worker_id']);
+        $lines = array_values($d['lines']);
+
+        $this->withPeriodOverride($r, function () use ($d, $lines, $worker, $uuid) {
+            DB::transaction(function () use ($d, $lines, $worker, $uuid) {
+                foreach ($lines as $i => $l) {
+                    $rate = isset($l['rate']) && $l['rate'] !== '' ? (float) $l['rate'] : $worker->rateFor((int) $l['garment_type_id']);
+                    WorkEntry::create([
+                        // the first line keeps the form's uuid (replay guard); the others get a stable id derived from it
+                        'uuid' => $uuid === '' ? null : ($i === 0 ? $uuid : \Ramsey\Uuid\Uuid::uuid5(\Ramsey\Uuid\Uuid::NAMESPACE_URL, "$uuid#$i")->toString()),
+                        'worker_id' => $d['worker_id'], 'date' => $d['date'], 'notes' => $d['notes'] ?? null, 'status' => $d['status'] ?? 'open',
+                        'order_id' => $l['order_id'] ?? null, 'garment_type_id' => $l['garment_type_id'],
+                        'qty' => $l['qty'], 'rate' => $rate, 'amount' => round($l['qty'] * $rate, 2),
+                    ]);
+                }
+            });
+        });
+
+        return $this->done($r, count($lines) > 1 ? __(':n work entries saved.', ['n' => count($lines)]) : __(':x saved.', ['x' => $this->singular]));
     }
 
     protected function prepare(array $data, ?Model $m, Request $r): array
