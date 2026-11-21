@@ -20,7 +20,8 @@ return [
         'purpose' => 'Bulk stitching jobs from your clients (brands): what was ordered, by when, and what it cost.',
         'how' => ['Add an order: customer, brand (pick from the list), collection (type it), fabric, quantity, rate, due date and photos.',
             'The order number fills in by itself when you choose the customer and runs on that customer\'s own sequence (SWA-0006, SWA-0007 …).', 'Open an order to see costs (materials + labour), production progress, deliveries and profit.',
-            'Use Filters to find orders by customer, brand, collection, fabric, status or date.'],
+            'Use Filters to find orders by customer, brand, collection, fabric, status or date.',
+            'The Columns button (top right of every list) chooses which columns the grid shows, e.g. hide Fabric or Due. It is remembered in this browser; Reset brings every column back. Exports always contain every column.'],
         'tips' => ['Expenses and work entries linked to an order are what make its profit figure correct.']],
 
     'customers' => ['group' => 'Business', 'title' => 'Customers', 'route' => 'customers.index', 'perm' => 'customers.view',
@@ -31,36 +32,16 @@ return [
 
     'invoices' => ['group' => 'Business', 'title' => 'Invoices', 'route' => 'invoices.index', 'perm' => 'invoices.view',
         'purpose' => 'Bills sent to customers, with a PDF and a record of what is paid.',
-        'how' => ['Create an invoice from a customer (and optionally an order); add line items, discount and tax.',
-            'Tick Deduct customer advance if the customer paid before the invoice.', 'Record payments from the invoice page; partial payments are fine.'],
-        'tips' => ['Status moves Unpaid → Partial → Paid automatically.']],
+        'how' => ['Create an invoice from a customer (and optionally an order); add line items, discount and tax. After you choose the customer, the Order list shows only that customer\'s orders.',
+            'Tick Deduct customer advance if the customer paid before the invoice.', 'Record payments from the invoice page; partial payments are fine.',
+            'The PDF shows your logo, the status (Paid / Partial / Unpaid), the Total, what was Paid and the Balance, and any note you wrote.'],
+        'tips' => ['Status moves Unpaid → Partial → Paid automatically.', 'The logo on invoices is set in Settings → Branding → Invoice logo.']],
 
     'customer-payments' => ['group' => 'Business', 'title' => 'Customer payments', 'route' => 'customer-payments.index', 'perm' => 'customer_payments.view',
         'purpose' => 'Money received from customers, either against an invoice or as an advance.',
         'how' => ['Add a payment: customer, amount, cash or bank. Choose an invoice, or leave it empty to keep it as an advance.', 'Attach the receipt (bank screenshot, deposit slip or cheque photo) so the proof is kept with the payment.',
             'Apply an advance to invoices later from the invoice page.'],
         'tips' => ['Unused advances are shown as money you hold for the customer, and count as a liability on the balance sheet.']],
-
-    'production' => ['group' => 'Production', 'title' => 'Production board', 'route' => 'production.board', 'perm' => 'production.view',
-        'purpose' => 'Shows every open order by stage (cutting, stitching, finishing, quality check, packing, delivered) and which are late.',
-        'how' => ['Read the board to see how many pieces sit in each stage.', 'Late orders are flagged with days late.'],
-        'tips' => ['Counts come from Production log entries, not from work entries.']],
-
-    'production-logs' => ['group' => 'Production', 'title' => 'Production log', 'route' => 'production-logs.index', 'perm' => 'production.view',
-        'purpose' => 'Record how many pieces of an order passed each stage.',
-        'how' => ['Add an entry: order, stage, pieces, date.', 'Each stage count cannot exceed the order quantity.'],
-        'tips' => []],
-
-    'production-rejects' => ['group' => 'Production', 'title' => 'Rejects & rework', 'route' => 'production-rejects.index', 'perm' => 'production.view',
-        'purpose' => 'Track faulty pieces and who was responsible.',
-        'how' => ['Add a reject: order, worker, pieces, reason, rework or scrap.', 'Tick deduct from pay to reduce that worker\'s earnings by a set amount.'],
-        'tips' => ['Deductions appear on the worker\'s ledger and in Deductions & bonuses.']],
-
-    'deliveries' => ['group' => 'Production', 'title' => 'Deliveries', 'route' => 'deliveries.index', 'perm' => 'deliveries.view',
-        'purpose' => 'Partial or full deliveries to the brand, each with a printable challan.',
-        'how' => ['Add a delivery: order, pieces sent, vehicle, who received.', 'Open it and press Challan PDF.',
-            'When all pieces are delivered the order becomes Delivered.'],
-        'tips' => ['The app stops you delivering more than the order quantity (plus the allowed margin).']],
 
     'expenses' => ['group' => 'Expenses', 'title' => 'Expenses', 'route' => 'expenses.index', 'perm' => 'expenses.view',
         'purpose' => 'Every rupee spent: order materials, unit purchases, labour extras and other costs.',
@@ -99,7 +80,7 @@ return [
 
     'work-entries' => ['group' => 'Labour', 'title' => 'Work entries', 'route' => 'work-entries.index', 'perm' => 'work_entries.view',
         'purpose' => 'Piece-rate work: who stitched how many of which garment.',
-        'how' => ['Add an entry: worker, garment, quantity, date and optionally the order.', 'The rate comes from the rate card and is saved with the entry.', 'The Payment column shows Paid / Partly paid / Unpaid: a worker\'s payments clear their entries oldest first. Editing or deleting a paid entry shows a warning, because it changes what the worker is owed.', 'Admins can lock a settled entry (Entry status = Closed) or tick several rows in the grid and press Lock selected. A locked entry can only be changed, re-opened or deleted by a Super Admin.'],
+        'how' => ['Add an entry: worker, garment, quantity, date and optionally the order.', 'Same worker on several orders? Press Add another order and give each order its garment and pieces: every order is saved as its own entry, so each order is costed correctly.', 'The rate comes from the rate card and is saved with the entry.', 'The Payment column shows Paid / Partly paid / Unpaid: a worker\'s payments clear their entries oldest first. Editing or deleting a paid entry shows a warning, because it changes what the worker is owed.', 'Admins can lock a settled entry (Entry status = Closed) or tick several rows in the grid and press Lock selected. A locked entry can only be changed, re-opened or deleted by a Super Admin.'],
         'tips' => ['Changing a rate later only affects new entries.']],
 
     'salaries' => ['group' => 'Labour', 'title' => 'Monthly salaries', 'route' => 'salaries.index', 'perm' => 'salaries.view',
@@ -121,6 +102,27 @@ return [
         'purpose' => 'Your own earnings, payments and balance.',
         'how' => ['Pick a period to see what you earned and were paid.', 'Download your payslip.'],
         'tips' => []],
+
+    'production' => ['group' => 'Production', 'title' => 'Production board', 'route' => 'production.board', 'perm' => 'production.view',
+        'purpose' => 'Shows every open order by stage (cutting, stitching, finishing, quality check, packing), then Completed and Delivered, and which are late.',
+        'how' => ['Read the board to see how many pieces sit in each stage.', 'Late orders are flagged with days late.', 'Completed = orders whose status is Completed (ready to hand over). Delivered = orders that are fully delivered; the last 30 days are shown, tick Show all delivered orders for older ones.'],
+        'tips' => ['Counts come from Production log entries, not from work entries.']],
+
+    'production-logs' => ['group' => 'Production', 'title' => 'Production log', 'route' => 'production-logs.index', 'perm' => 'production.view',
+        'purpose' => 'Record how many pieces of an order passed each stage.',
+        'how' => ['Add an entry: order, stage, pieces, date.', 'Each stage count cannot exceed the order quantity.'],
+        'tips' => []],
+
+    'production-rejects' => ['group' => 'Production', 'title' => 'Rejects & rework', 'route' => 'production-rejects.index', 'perm' => 'production.view',
+        'purpose' => 'Track faulty pieces and who was responsible.',
+        'how' => ['Add a reject: order, worker, pieces, reason, rework or scrap.', 'Tick deduct from pay to reduce that worker\'s earnings by a set amount.'],
+        'tips' => ['Deductions appear on the worker\'s ledger and in Deductions & bonuses.']],
+
+    'deliveries' => ['group' => 'Production', 'title' => 'Deliveries', 'route' => 'deliveries.index', 'perm' => 'deliveries.view',
+        'purpose' => 'Partial or full deliveries to the brand, each with a printable challan.',
+        'how' => ['Add a delivery: order, pieces sent, vehicle, who received.', 'Open it and press Challan PDF.',
+            'When all pieces are delivered the order becomes Delivered.'],
+        'tips' => ['The app stops you delivering more than the order quantity (plus the allowed margin).']],
 
     'cash-transfers' => ['group' => 'Capital', 'title' => 'Cash ⇄ Bank', 'route' => 'cash-transfers.index', 'perm' => 'transfers.view',
         'purpose' => 'Record cash you take out of the bank (or deposit back), so Cash in hand and Bank are both correct.',
@@ -180,7 +182,7 @@ return [
 
     'settings' => ['group' => 'Admin', 'title' => 'Settings & notifications', 'route' => 'settings', 'perm' => 'settings.view',
         'purpose' => 'Business details, logos, security rules and which alerts go to whom.',
-        'how' => ['Set business name, address, prefixes and logos. The time zone is Pakistan Standard Time (shown at the top of this page); all dates, times and the nightly jobs follow it.', 'Menu: tick only the items you want in the side menu, phone menu and quick-add list (Dashboard and Settings are always shown).', 'Tick which events notify by in-app, email or WhatsApp.',
+        'how' => ['Set business name, address, prefixes and logos (login page, dashboard / sidebar, invoice and app icon). The time zone is Pakistan Standard Time (shown at the top of this page); all dates, times and the nightly jobs follow it.', 'Menu: tick only the items you want in the side menu, phone menu and quick-add list (Dashboard and Settings are always shown).', 'Tick which events notify by in-app, email or WhatsApp.',
             'Turn on Require 2FA for admins if wanted.'], 'tips' => ['Email needs real mail settings on the server.']],
 
     'periods' => ['group' => 'Admin', 'title' => 'Month close', 'route' => 'periods.index', 'perm' => 'period.close',
