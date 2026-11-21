@@ -96,7 +96,7 @@
     --color-emerald-50: #0f2a20; --color-emerald-100: #12372a; --color-emerald-200: #1d5a43; --color-emerald-700: #6ee7b7; --color-emerald-800: #86efac;
     --color-rose-50: #33141b; --color-rose-100: #44181f; --color-rose-200: #6b2430; --color-rose-700: #fda4af; --color-rose-800: #fecdd3;
     --color-amber-50: #33260d; --color-amber-100: #42310e; --color-amber-200: #6b4d12; --color-amber-700: #fcd34d; --color-amber-800: #fde68a;
-    --color-sky-100: #0c2d44; --color-sky-800: #bae6fd;
+    --color-sky-50: #0b2236; --color-sky-100: #0c2d44; --color-sky-700: #7dd3fc; --color-sky-800: #bae6fd;
 }
 .dark :is(.bg-white, .card, .stat, .btn-ghost) { background-color: #17171a; }
 .dark .input { background-color: #0f0f11; }

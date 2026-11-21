@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Customer;
 use App\Models\Invoice;
 use App\Models\Order;
+use App\Models\InvoiceAdjustment;
 use App\Models\PaymentAllocation;
 use App\Services\Notifier;
 use App\Support\Advances;
@@ -69,7 +70,7 @@ class InvoiceController extends CrudController
                 'collection_name' => $o->brand_collection, 'fabric_name' => $o->fabric_name]]),
             // unused advance per customer (embedded so it also works offline) + what the invoice has already received
             'advances' => Customer::pluck('id')->mapWithKeys(fn ($id) => [$id => Advances::available($id)])->filter(fn ($v) => $v > 0),
-            'paidAlready' => $m ? $m->paid() : 0,
+            'paidAlready' => $m ? $m->paid() + $m->adjusted() : 0,
         ];
     }
 
@@ -98,7 +99,7 @@ class InvoiceController extends CrudController
         if ($r->boolean('apply_advance')) {
             $amt = round((float) $r->input('advance_amount'), 2);
             $free = Advances::available((int) $data['customer_id']);
-            $room = $data['total'] - ($m ? $m->paid() : 0);
+            $room = $data['total'] - ($m ? $m->paid() + $m->adjusted() : 0);
             $err = match (true) {
                 $amt <= 0 => __('Enter the advance amount to deduct.'),
                 $amt > $free + 0.004 => __('Only :a advance is available for this customer.', ['a' => money($free)]),
@@ -132,7 +133,7 @@ class InvoiceController extends CrudController
 
     protected function beforeDelete(Model $m): ?string
     {
-        return $m->payments()->withoutGlobalScopes()->exists() ? __('Invoice has payments recorded.') : null;
+        return $m->payments()->withoutGlobalScopes()->exists() || $m->adjustments()->exists() ? __('Invoice has payments or adjustments recorded.') : null;
     }
 
     public function show($id)
@@ -144,6 +145,7 @@ class InvoiceController extends CrudController
             'inv' => $inv,
             'payments' => $inv->payments()->withoutGlobalScopes()->orderBy('date')->get(),
             'allocations' => $inv->allocations()->with('payment')->orderBy('date')->orderBy('id')->get(),
+            'adjustments' => $inv->adjustments()->orderBy('date')->orderBy('id')->get(),
             'advance' => Advances::available($inv->customer_id),
         ]);
     }
@@ -157,6 +159,35 @@ class InvoiceController extends CrudController
         $applied = Advances::apply($inv, (float) $r->input('amount'), 'amount');
 
         return back()->with('success', __(':a advance applied to :n.', ['a' => money($applied), 'n' => $inv->number]));
+    }
+
+    /**
+     * Settle part of the balance WITHOUT cash — e.g. the customer provided services worth Rs 7,000. Lowers the invoice balance like a
+     * payment (never below zero), moves no money, and is deducted from revenue on its date (see Finance::profitLoss).
+     */
+    public function adjust(Request $r, $id)
+    {
+        $this->authorizeAction('edit');
+        $inv = Invoice::findOrFail($id);
+        $d = $r->validate(['amount' => 'required|numeric|min:0.01', 'date' => 'required|date', 'reason' => 'required|string|min:3|max:255']);
+
+        $bal = $inv->balance();
+        if ((float) $d['amount'] > $bal + 0.004) {
+            throw ValidationException::withMessages(['amount' => __('The adjustment is more than the invoice balance (:b).', ['b' => money($bal)])]);
+        }
+        $this->withPeriodOverride($r, fn () => $inv->adjustments()->create(['date' => $d['date'], 'amount' => round((float) $d['amount'], 2), 'reason' => trim($d['reason'])]));
+
+        return back()->with('success', __(':a adjusted on :n. Balance now :b.', ['a' => money($d['amount']), 'n' => $inv->number, 'b' => money($inv->fresh()->balance())]));
+    }
+
+    /** Remove an adjustment (the amount becomes due again). */
+    public function removeAdjustment(Request $r, $id, $adjustment)
+    {
+        $this->authorizeAction('edit');
+        $a = InvoiceAdjustment::where('invoice_id', $id)->findOrFail($adjustment);
+        $this->withPeriodOverride($r, fn () => $a->delete());
+
+        return back()->with('success', __('Adjustment removed; the amount is due again.'));
     }
 
     /** Take an applied advance back off the invoice (the money returns to the customer's advance balance). */

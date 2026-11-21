@@ -45,7 +45,7 @@ class Finance
     }
 
     /**
-     * Every invoice with what has been paid against it (direct payments + advances applied) and what is left.
+     * Every invoice with what has been paid against it (direct payments + advances applied), the non-cash adjustments and what is left.
      * A negative balance means the customer paid more than the invoice.
      *
      * @return \Illuminate\Support\Collection<int,array{id:int,number:string,customer_id:int,date:\Carbon\Carbon,due:?\Carbon\Carbon,total:float,paid:float,balance:float}> keyed by invoice id
@@ -54,12 +54,14 @@ class Finance
     {
         $direct = CustomerPayment::withoutGlobalScopes()->whereNotNull('invoice_id')->selectRaw('invoice_id, SUM(amount) s')->groupBy('invoice_id')->pluck('s', 'invoice_id');
         $applied = \App\Models\PaymentAllocation::selectRaw('invoice_id, SUM(amount) s')->groupBy('invoice_id')->pluck('s', 'invoice_id');
+        $adjusted = \App\Models\InvoiceAdjustment::selectRaw('invoice_id, SUM(amount) s')->groupBy('invoice_id')->pluck('s', 'invoice_id');
 
-        return Invoice::get(['id', 'number', 'customer_id', 'date', 'due_date', 'total'])->mapWithKeys(function ($i) use ($direct, $applied) {
+        return Invoice::get(['id', 'number', 'customer_id', 'date', 'due_date', 'total'])->mapWithKeys(function ($i) use ($direct, $applied, $adjusted) {
             $paid = round((float) ($direct[$i->id] ?? 0) + (float) ($applied[$i->id] ?? 0), 2);
+            $adj = round((float) ($adjusted[$i->id] ?? 0), 2);
 
             return [$i->id => ['id' => $i->id, 'number' => $i->number, 'customer_id' => $i->customer_id, 'date' => $i->date, 'due' => $i->due_date,
-                'total' => (float) $i->total, 'paid' => $paid, 'balance' => round((float) $i->total - $paid, 2)]];
+                'total' => (float) $i->total, 'paid' => $paid, 'adjusted' => $adj, 'balance' => round((float) $i->total - $paid - $adj, 2)]];
         });
     }
 
@@ -114,7 +116,10 @@ class Finance
     {
         $range = fn ($q, $col = 'date') => $q->when($from, fn ($x) => $x->whereDate($col, '>=', $from))->when($to, fn ($x) => $x->whereDate($col, '<=', $to));
 
-        $revenue = (float) $range(Invoice::query())->sum('total');
+        // Revenue = what was invoiced, less non-cash adjustments (services the customer provided, settled against an invoice) on their own date.
+        $invoiced = (float) $range(Invoice::query())->sum('total');
+        $adjusted = (float) $range(\App\Models\InvoiceAdjustment::query())->sum('amount');
+        $revenue = round($invoiced - $adjusted, 2);
         $exp = $range(Expense::withoutGlobalScopes())->selectRaw('type, SUM(base_amount) s')->groupBy('type')->pluck('s', 'type');
         // Labour is a cost on the day it is PAID (wages, salaries and advances paid to workers), not when the work is entered.
         // Money paid toward dues owed from before the app (a worker's "previous due") is paid like any other wages, so it IS counted here;
@@ -122,7 +127,10 @@ class Finance
         $oldDues = self::previousDuePaid($from, $to);
         $labour = (float) $range(WorkerPayment::withoutGlobalScopes())->sum('amount');
 
-        $rows = [[__('Revenue (invoiced)'), $revenue]];
+        $rows = [[__('Revenue (invoiced)'), $invoiced]];
+        if (abs($adjusted) > 0.004) {
+            $rows[] = [__('Less: customer adjustments (services received, settled against invoices)'), -$adjusted];
+        }
         $costs = 0.0;
         foreach (['order' => 'Order expenses (materials)', 'unit' => 'Unit expenses', 'labour' => 'Labour expenses (food etc.)', 'other' => 'Other expenses (rent, bills)'] as $k => $l) {
             $v = (float) ($exp[$k] ?? 0);

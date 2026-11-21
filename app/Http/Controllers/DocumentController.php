@@ -75,6 +75,9 @@ class DocumentController extends Controller
         foreach ($c->invoices()->get() as $i) {
             $ev->push([$i->date, __('Invoice').' '.$i->number, (float) $i->total, 0.0]);
         }
+        foreach (\App\Models\InvoiceAdjustment::whereIn('invoice_id', $c->invoices()->select('id'))->with('invoice')->get() as $a) {
+            $ev->push([$a->date, __('Adjustment').' ('.$a->invoice?->number.') — '.$a->reason, 0.0, (float) $a->amount]);
+        }
         foreach (CustomerPayment::withoutGlobalScopes()->where('customer_id', $c->id)->get() as $p) {
             $ev->push([$p->date, ($p->invoice_id ? __('Payment') : __('Advance payment')).' ('.label($p->mode).')'.($p->reference ? " {$p->reference}" : ''), 0.0, (float) $p->amount]);
         }

@@ -197,6 +197,9 @@ class ReportController extends Controller
             foreach (Invoice::where('customer_id', $c->id)->get() as $i) {
                 $ev->push([$i->date, __('Invoice').' '.$i->number, (float) $i->total, 0.0]);
             }
+            foreach (\App\Models\InvoiceAdjustment::whereIn('invoice_id', Invoice::where('customer_id', $c->id)->select('id'))->with('invoice')->get() as $a) {
+                $ev->push([$a->date, __('Adjustment').' ('.$a->invoice?->number.') — '.$a->reason, 0.0, (float) $a->amount]);
+            }
             foreach (CustomerPayment::withoutGlobalScopes()->where('customer_id', $c->id)->get() as $p) {
                 $ev->push([$p->date, __('Payment').' ('.label($p->mode).')'.($p->reference ? " {$p->reference}" : ''), 0.0, (float) $p->amount]);
             }
@@ -309,7 +312,7 @@ class ReportController extends Controller
                 $late = (int) $today->diffInDays(($i['due'] ?? $i['date'])->copy()->startOfDay(), false) * -1;   // days past due
                 $b[$late <= 0 ? 'cur' : ($late <= 30 ? 'd30' : ($late <= 60 ? 'd60' : ($late <= 90 ? 'd90' : 'd90p')))] += $i['balance'];
             }
-            $row = ['inv' => $inv->sum('total'), 'rec' => $inv->sum('paid'), 'out' => array_sum($b),
+            $row = ['inv' => $inv->sum('total'), 'rec' => $inv->sum('paid') + $inv->sum('adjusted'), 'out' => array_sum($b),
                 'over' => $inv->sum(fn ($i) => max(0, -$i['balance'])), 'adv' => $c->advance()] + $b;
             if (! $inv->count() && abs($row['adv']) < 0.004) {
                 continue;
@@ -322,7 +325,7 @@ class ReportController extends Controller
         }
 
         return [
-            'head' => [__('Customer'), __('Invoiced'), __('Received'), __('Outstanding'), __('Current'), '1–30 '.__('days late'), '31–60', '61–90', '90+',
+            'head' => [__('Customer'), __('Invoiced'), __('Received / adjusted'), __('Outstanding'), __('Current'), '1–30 '.__('days late'), '31–60', '61–90', '90+',
                 __('Overpaid'), __('Advance held')],
             'rows' => $rows, 'moneyCols' => range(1, 10),
             'totals' => [__('Total outstanding') => $t['out'], __('Past due') => round($t['d30'] + $t['d60'] + $t['d90'] + $t['d90p'], 2),

@@ -93,6 +93,7 @@ Route::middleware(['auth', \App\Http\Middleware\EnsureTwoFactor::class])->group(
 
     // extra (non-resource) routes — declared before the resources they could clash with
     Route::get('/orders/next-number', [OrderController::class, 'nextNumber'])->name('orders.next-number');
+    Route::post('/receipts/ocr', \App\Http\Controllers\ReceiptReadController::class)->middleware('throttle:30,1')->name('receipts.ocr');
     Route::post('/expenses/ocr', [ExpenseController::class, 'ocr'])->name('expenses.ocr');
     Route::post('/work-entries/bulk', [WorkEntryController::class, 'bulk'])->name('work-entries.bulk');
     Route::post('/salaries/generate', [SalaryEntryController::class, 'generate'])->name('salaries.generate');
@@ -103,6 +104,8 @@ Route::middleware(['auth', \App\Http\Middleware\EnsureTwoFactor::class])->group(
     Route::get('/production', [\App\Http\Controllers\ProductionBoardController::class, 'index'])->name('production.board');
     Route::get('/deliveries/{id}/pdf', [\App\Http\Controllers\DeliveryController::class, 'pdf'])->name('deliveries.pdf');
     Route::post('/invoices/{id}/apply-advance', [InvoiceController::class, 'applyAdvance'])->name('invoices.apply-advance');
+    Route::post('/invoices/{id}/adjustments', [InvoiceController::class, 'adjust'])->name('invoices.adjust');
+    Route::delete('/invoices/{id}/adjustments/{adjustment}', [InvoiceController::class, 'removeAdjustment'])->name('invoices.adjustments.destroy');
     Route::delete('/invoices/{id}/allocations/{allocation}', [InvoiceController::class, 'removeAllocation'])->name('invoices.allocations.destroy');
 
     // module resources: uri => controller

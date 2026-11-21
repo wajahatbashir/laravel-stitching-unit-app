@@ -25,11 +25,18 @@ class Invoice extends Model
 
     /** Direct payments + advances applied to this invoice. */
     public function paid(): float { return (float) $this->payments()->withoutGlobalScopes()->sum('amount') + (float) $this->allocations()->sum('amount'); }
-    public function balance(): float { return (float) $this->total - $this->paid(); }
+
+    public function adjustments() { return $this->hasMany(InvoiceAdjustment::class); }
+
+    /** Non-cash settlements (services the customer provided etc.). */
+    public function adjusted(): float { return (float) $this->adjustments()->sum('amount'); }
+
+    /** What is left to collect: total − cash / advances received − adjustments. */
+    public function balance(): float { return round((float) $this->total - $this->paid() - $this->adjusted(), 2); }
 
     public function status(): string
     {
-        $paid = $this->paid();
+        $paid = $this->paid() + $this->adjusted();
         return $paid <= 0 ? 'unpaid' : ($paid + 0.004 >= (float) $this->total ? 'paid' : 'partial');
     }
 

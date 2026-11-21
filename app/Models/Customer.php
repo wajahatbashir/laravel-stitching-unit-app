@@ -29,13 +29,15 @@ class Customer extends Model
     public function invoices() { return $this->hasMany(Invoice::class); }
     public function payments() { return $this->hasMany(CustomerPayment::class); }
 
-    /** Money still owed on invoices (after direct payments and applied advances). */
+    /** Money still owed on invoices (after direct payments, applied advances and adjustments). */
     public function receivable(): float
     {
         $direct = (float) $this->payments()->withoutGlobalScopes()->whereNotNull('invoice_id')->sum('amount');
         $applied = (float) PaymentAllocation::whereIn('invoice_id', $this->invoices()->select('id'))->sum('amount');
 
-        return round((float) $this->invoices()->sum('total') - $direct - $applied, 2);
+        $adjusted = (float) InvoiceAdjustment::whereIn('invoice_id', $this->invoices()->select('id'))->sum('amount');
+
+        return round((float) $this->invoices()->sum('total') - $direct - $applied - $adjusted, 2);
     }
 
     /** Unused advance money held for this customer. */

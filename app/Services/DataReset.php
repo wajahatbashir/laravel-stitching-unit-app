@@ -18,7 +18,7 @@ class DataReset
 {
     public const WIPE = [
         'assets', 'attachments', 'audit_logs', 'cash_transfers', 'customer_payments', 'customers', 'deliveries', 'expense_orders', 'expenses', 'inventory_items',
-        'investments', 'investors', 'invoice_items', 'invoices', 'notifications', 'orders', 'payment_allocations', 'period_closures',
+        'investments', 'investors', 'invoice_adjustments', 'invoice_items', 'invoices', 'notifications', 'orders', 'payment_allocations', 'period_closures',
         'production_logs', 'production_rejects', 'salary_entries', 'stock_movements', 'vendor_payments', 'vendors', 'work_entries',
         'worker_adjustments', 'worker_payments', 'worker_rates', 'workers',
     ];

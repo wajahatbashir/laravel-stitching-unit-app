@@ -10,6 +10,7 @@
     .tot td { border: 0; padding: 3px 6px; }
     .tot tr.total td { border-top: 1px solid #222; }
     .paid { color: #047857; }
+    .adj { color: #0369a1; }
     .due { color: #be123c; font-weight: bold; }
     .badge { display: inline-block; padding: 2px 8px; border-radius: 8px; font-size: 10px; font-weight: bold; }
     .b-paid { background: #d1fae5; color: #047857; } .b-partial { background: #fef3c7; color: #92400e; } .b-unpaid { background: #ffe4e6; color: #be123c; }
@@ -33,6 +34,7 @@
     @if ($inv->tax > 0)<tr><td>Tax</td><td class="r">{{ number_format($inv->tax, 2) }}</td></tr>@endif
     <tr class="total"><td><strong>Total</strong></td><td class="r"><strong>{{ money($inv->total) }}</strong></td></tr>
     <tr class="paid"><td>Paid</td><td class="r">{{ money($inv->paid()) }}</td></tr>
+    @if ($inv->adjusted() > 0)<tr class="adj"><td>Adjustment</td><td class="r">{{ money($inv->adjusted()) }}</td></tr>@endif
     <tr class="due"><td>Balance</td><td class="r">{{ money($inv->balance()) }}</td></tr>
 </table>
 @if ($inv->notes)<div style="clear:both;margin-top:34px;padding-top:8px;border-top:1px solid #eee;line-height:1.5"><strong>Notes:</strong> {{ $inv->notes }}</div>@endif
