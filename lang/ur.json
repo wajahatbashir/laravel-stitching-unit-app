@@ -582,5 +582,7 @@
     "Expenses are the entries on the Expenses page; labour is what you paid workers in the period (wages, salaries and advances). Work entered but not yet paid is not counted until you pay it.": "اخراجات وہ اندراجات ہیں جو اخراجات کے صفحے پر ہیں؛ مزدوری وہ ہے جو آپ نے اس مدت میں کارکنوں کو ادا کی (اجرت، تنخواہ اور ایڈوانس)۔ درج شدہ مگر غیر ادا کام ادائیگی تک شمار نہیں ہوتا۔",
     "Work entries and salaries in the period, net of deductions. It becomes a cost when you pay it.": "اس مدت کی ورک انٹریاں اور تنخواہیں، کٹوتیوں کے بعد۔ ادائیگی پر یہ لاگت بنتی ہے۔",
     "What you still owe workers today (including previous dues, after advances). It goes down every time you record a payment and reaches zero when everyone is paid.": "آج آپ پر کارکنوں کی باقی رقم (پچھلی واجب رقم سمیت، ایڈوانس کے بعد)۔ ہر ادائیگی درج کرنے پر کم ہوتی ہے اور سب کی ادائیگی پر صفر ہو جاتی ہے۔",
-    "Wages and salaries are counted on the day they are paid. Hover a bar for the exact amount.": "اجرتیں اور تنخواہیں ادائیگی کے دن شمار ہوتی ہیں۔ صحیح رقم کے لیے بار پر ہوور کریں۔"
+    "Wages and salaries are counted on the day they are paid. Hover a bar for the exact amount.": "اجرتیں اور تنخواہیں ادائیگی کے دن شمار ہوتی ہیں۔ صحیح رقم کے لیے بار پر ہوور کریں۔",
+    "Show all delivered orders": "تمام ڈیلیور شدہ آرڈرز دکھائیں",
+    "last :n days": "پچھلے :n دن"
 }

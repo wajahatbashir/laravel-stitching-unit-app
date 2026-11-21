@@ -87,6 +87,31 @@ class ProductionTest extends TestCase
         $this->get("/orders/{$this->order->id}")->assertOk()->assertSee('Production')->assertSee('Log pieces');
     }
 
+    public function test_board_has_completed_and_delivered_columns(): void
+    {
+        $c = $this->order->customer_id;
+        $mk = fn ($no, $status, $x = []) => Order::create(['order_no' => $no, 'date' => '2026-09-20', 'customer_id' => $c, 'qty' => 10, 'status' => $status] + $x);
+        $done = $mk('ORD-DONE', 'completed');
+        $recent = $mk('ORD-RECENT', 'delivered');
+        $old = $mk('ORD-OLD', 'delivered');
+        $mk('ORD-CANCELLED', 'cancelled');
+        \App\Models\Delivery::create(['order_id' => $recent->id, 'challan_no' => 'DC-R', 'date' => '2026-10-01', 'qty' => 10]);
+        \App\Models\Delivery::create(['order_id' => $old->id, 'challan_no' => 'DC-O', 'date' => '2026-08-01', 'qty' => 10]);
+
+        $r = $this->get('/production')->assertOk();
+        $this->assertSame(['new', 'cutting', 'stitching', 'finishing', 'quality', 'packing', 'completed', 'delivered'], array_keys($r->viewData('columns')));
+        $r->assertSee('Completed')->assertSee('Delivered');
+        $cards = fn ($k) => collect($r->viewData('cards')[$k])->map(fn ($x) => $x['order']->order_no)->all();
+        $this->assertSame(['ORD-DONE'], $cards('completed'));
+        $this->assertSame(['ORD-RECENT'], $cards('delivered'));        // delivered 6 days ago; ORD-OLD (2 months ago) is hidden
+        $this->assertContains('ORD-1', $cards('new'));
+        $r->assertDontSee('ORD-OLD')->assertDontSee('ORD-CANCELLED');
+
+        $all = $this->get('/production?all=1')->assertOk();
+        $this->assertEqualsCanonicalizing(['ORD-RECENT', 'ORD-OLD'], collect($all->viewData('cards')['delivered'])->map(fn ($x) => $x['order']->order_no)->all());
+        $all->assertDontSee('ORD-CANCELLED');
+    }
+
     public function test_rejects_can_deduct_from_worker_pay_and_stay_in_sync(): void
     {
         $g = GarmentType::where('name', 'Shirt')->first();
@@ -164,7 +189,9 @@ class ProductionTest extends TestCase
         $send(701)->assertStatus(422)->assertJsonValidationErrors('qty');          // 400 + 701 > 1100
         $send(600)->assertOk();                                                     // completes the order
         $this->assertSame('delivered', $this->order->fresh()->status);
-        $this->assertSame('DC-0002', Delivery::latest('id')->first()->challan_no);
+        $second = Delivery::latest('id')->first()->challan_no;        // numbered from the highest delivery id, so only its shape and uniqueness are fixed
+        $this->assertMatchesRegularExpression('/^DC-\d{4}$/', $second);
+        $this->assertNotSame('DC-0001', $second);
 
         // duplicate challan numbers (stale offline form) are renumbered, not rejected
         $send(1, ['challan_no' => 'DC-0001'])->assertOk();
@@ -176,7 +203,7 @@ class ProductionTest extends TestCase
         $pdf->assertOk();
         $this->assertSame('application/pdf', $pdf->headers->get('Content-Type'));
         $this->assertStringStartsWith('%PDF', $pdf->getContent());
-        $this->get('/deliveries')->assertOk()->assertSee('DC-0002');
+        $this->get('/deliveries')->assertOk()->assertSee($second);
 
         // deleting a delivery re-opens a fully delivered order
         $last = Delivery::latest('id')->first();

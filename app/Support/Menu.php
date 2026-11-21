@@ -24,12 +24,6 @@ class Menu
                 [__('Invoices'), 'invoices.index', 'doc', 'invoices.view', 'invoices.*'],
                 [__('Customer payments'), 'customer-payments.index', 'cash', 'customer_payments.view', 'customer-payments.*'],
             ],
-            __('Production') => [
-                [__('Production board'), 'production.board', 'orders', 'production.view', 'production.*'],
-                [__('Production log'), 'production-logs.index', 'doc', 'production.view', 'production-logs.*'],
-                [__('Rejects & rework'), 'production-rejects.index', 'shield', 'production.view', 'production-rejects.*'],
-                [__('Deliveries'), 'deliveries.index', 'cube', 'deliveries.view', 'deliveries.*'],
-            ],
             __('Expenses') => [
                 [__('Expenses'), 'expenses.index', 'cash', 'expenses.view', 'expenses.*'],
                 [__('Vendors'), 'vendors.index', 'building', 'vendors.view', 'vendors.*'],
@@ -44,6 +38,12 @@ class Menu
                 [__('Payments & advances'), 'worker-payments.index', 'cash', 'worker_payments.view', 'worker-payments.*'],
                 [__('Deductions & bonuses'), 'worker-adjustments.index', 'cash', 'worker_payments.view', 'worker-adjustments.*'],
                 [__('My ledger'), 'my-ledger', 'doc', 'my.ledger', 'my-ledger'],
+            ],
+            __('Production') => [
+                [__('Production board'), 'production.board', 'orders', 'production.view', 'production.*'],
+                [__('Production log'), 'production-logs.index', 'doc', 'production.view', 'production-logs.*'],
+                [__('Rejects & rework'), 'production-rejects.index', 'shield', 'production.view', 'production-rejects.*'],
+                [__('Deliveries'), 'deliveries.index', 'cube', 'deliveries.view', 'deliveries.*'],
             ],
             __('Capital') => [
                 [__('Assets'), 'assets.index', 'building', 'assets.view', 'assets.*'],

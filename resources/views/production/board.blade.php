@@ -16,7 +16,7 @@
             <option value="">{{ __('All clients') }}</option>
             @foreach ($customers as $id => $n)<option value="{{ $id }}" @selected((string) request('customer_id') === (string) $id)>{{ $n }}</option>@endforeach
         </select>
-        <label class="flex items-center gap-2 text-sm text-slate-600"><input type="checkbox" name="all" value="1" class="h-4 w-4 rounded border-slate-300" @checked(request('all')) onchange="this.form.submit()">{{ __('Show delivered orders') }}</label>
+        <label class="flex items-center gap-2 text-sm text-slate-600"><input type="checkbox" name="all" value="1" class="h-4 w-4 rounded border-slate-300" @checked(request('all')) onchange="this.form.submit()">{{ __('Show all delivered orders') }}</label>
         <span class="ms-auto text-sm text-slate-500">{{ $total }} {{ __('orders') }} @if ($late)· <strong class="text-rose-600">{{ $late }} {{ __('late') }}</strong>@endif</span>
     </form>
 
@@ -24,8 +24,8 @@
         <div class="flex min-w-max gap-3">
             @foreach ($columns as $key => $label)
                 <section class="w-[16.5rem] shrink-0">
-                    <header class="mb-2 flex items-center justify-between rounded-xl bg-slate-100 px-3 py-2">
-                        <h2 class="text-sm font-semibold text-slate-800">{{ $label }}</h2>
+                    <header class="mb-2 flex items-center justify-between rounded-xl px-3 py-2 {{ $key === 'delivered' ? 'bg-emerald-100' : ($key === 'completed' ? 'bg-amber-100' : 'bg-slate-100') }}">
+                        <h2 class="text-sm font-semibold text-slate-800">{{ $label }}@if ($key === 'delivered' && ! request('all')) <span class="text-[10px] font-normal text-slate-500">· {{ __('last :n days', ['n' => \App\Http\Controllers\ProductionBoardController::RECENT_DAYS]) }}</span>@endif</h2>
                         <span class="badge bg-white text-slate-700">{{ count($cards[$key]) }}</span>
                     </header>
                     <div class="space-y-2">
