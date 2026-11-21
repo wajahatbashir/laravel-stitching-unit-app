@@ -71,6 +71,7 @@ class OrderController extends CrudController
             [__('Collection'), 'collection_name'],
             [__('Fabric'), 'fabric_name'],
             [__('Qty'), 'qty'],
+            [__('Rate / pc'), 'rate', ['money' => true]],
             [__('Amount'), 'amount', ['money' => true]],
             [__('Due'), 'due_date'],
             [__('Status'), 'status', ['badge' => true, 'label' => true]],

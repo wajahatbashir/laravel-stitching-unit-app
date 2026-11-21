@@ -1,6 +1,28 @@
 @extends('layouts.app')
 @section('title', __($title))
 @section('actions')
+    {{-- Columns: choose which columns the grid shows (remembered in this browser, per list; the export always has every column) --}}
+    @php $pickable = collect($columns)->map(fn ($c, $i) => ['i' => $i, 'label' => $c[0], 'def' => ! empty(($c[2] ?? [])['hidden'])])->slice(1)->values(); @endphp
+    @if ($pickable->isNotEmpty())
+    <div class="relative" x-data="colPicker(@js($route), @js($pickable))" @click.outside="o = false" @keydown.escape.window="o = false">
+        <button type="button" class="btn btn-ghost btn-sm" @click="o = !o"><x-icon name="cog" class="h-4 w-4" />{{ __('Columns') }}<span x-show="hiddenCount > 0" x-cloak class="badge bg-brand-100 text-brand-800" x-text="'−' + hiddenCount"></span></button>
+        <div x-show="o" x-cloak x-transition.opacity class="absolute end-0 z-20 mt-2 w-60 rounded-2xl bg-white p-2 shadow-2xl ring-1 ring-slate-200">
+            <p class="px-2 pb-1 pt-0.5 text-xs font-semibold text-slate-500">{{ __('Show these columns') }}</p>
+            <div class="max-h-72 overflow-y-auto">
+                <template x-for="c in cols" :key="c.i">
+                    <label class="flex min-h-10 cursor-pointer items-center gap-2 rounded-lg px-2 text-sm hover:bg-brand-50">
+                        <input type="checkbox" class="h-4 w-4 rounded border-slate-300 text-brand-700 focus:ring-brand-500" :checked="!hidden.includes(c.i)" @change="toggle(c.i)">
+                        <span x-text="c.label"></span>
+                    </label>
+                </template>
+            </div>
+            <div class="mt-1 flex justify-between border-t border-slate-100 px-2 pt-2 text-xs font-semibold">
+                <button type="button" class="text-brand-700 underline" @click="reset()">{{ __('Reset') }}</button>
+                <button type="button" class="text-slate-500 underline" @click="o = false">{{ __('Done') }}</button>
+            </div>
+        </div>
+    </div>
+    @endif
     <div class="relative" x-data="{ o: false }" @click.outside="o = false" @keydown.escape.window="o = false">
         <button type="button" class="btn btn-ghost btn-sm" @click="o = !o"><x-icon name="download" class="h-4 w-4" />{{ __('Export') }}<x-icon name="chevron" class="h-3.5 w-3.5" /></button>
         <div x-show="o" x-cloak x-transition.opacity class="absolute end-0 z-20 mt-2 w-40 rounded-2xl bg-white p-1.5 shadow-2xl ring-1 ring-slate-200">
@@ -80,7 +102,7 @@
         </div>
     </div>
 @else
-    <div @if (! empty($bulk)) x-data="{ n: 0,
+    <div data-list="{{ $route }}" @if (! empty($bulk)) x-data="{ n: 0,
         upd() { this.n = new Set([...document.querySelectorAll('.bulk-cb:checked')].map(c => c.value)).size },
         all(e) { document.querySelectorAll('.bulk-cb').forEach(c => c.checked = e.target.checked); this.upd() },
         clear() { document.querySelectorAll('.bulk-cb, .bulk-all').forEach(c => c.checked = false); this.upd() } }" @endif>
@@ -110,8 +132,8 @@
                     </div>
                 </div>
                 <dl class="mt-2 grid grid-cols-2 gap-x-3 gap-y-1.5 text-sm">
-                    @foreach (array_slice($columns, 1) as $col)
-                        <div class="min-w-0"><dt class="text-xs text-slate-400">{{ $col[0] }}</dt><dd class="truncate text-slate-700">{!! $cell($row, $col) !!}</dd></div>
+                    @foreach (array_slice($columns, 1, null, true) as $ci => $col)
+                        <div data-col="{{ $ci }}" class="min-w-0"><dt class="text-xs text-slate-400">{{ $col[0] }}</dt><dd class="truncate text-slate-700">{!! $cell($row, $col) !!}</dd></div>
                     @endforeach
                 </dl>
                 @if (in_array($row->id, $frozenIds))
@@ -131,15 +153,15 @@
         <table class="min-w-full divide-y divide-slate-200">
             <thead class="sticky top-0 z-10 bg-slate-50 shadow-[0_1px_0_var(--color-slate-200)]"><tr>
                 @if (! empty($bulk))<th class="th w-10"><input type="checkbox" class="bulk-all h-4 w-4 rounded border-slate-300" @change="all($event)" aria-label="{{ __('Select all') }}"></th>@endif
-                @foreach ($columns as $col)<th class="th {{ ! empty(($col[2] ?? [])['money']) ? 'text-end' : '' }}">{{ $col[0] }}</th>@endforeach
+                @foreach ($columns as $ci => $col)<th data-col="{{ $ci }}" class="th {{ ! empty(($col[2] ?? [])['money']) ? 'text-end' : '' }}">{{ $col[0] }}</th>@endforeach
                 <th class="th text-end">{{ __('Actions') }}</th>
             </tr></thead>
             <tbody class="divide-y divide-slate-100">
                 @foreach ($rows as $row)
                     <tr class="odd:bg-transparent even:bg-slate-50/50 hover:bg-brand-50">
                         @if (! empty($bulk))<td class="td w-10"><input type="checkbox" form="bulkForm" name="ids[]" value="{{ $row->id }}" class="bulk-cb h-4 w-4 rounded border-slate-300" @change="upd()" aria-label="{{ __('Select') }}"></td>@endif
-                        @foreach ($columns as $col)
-                            <td class="td {{ ! empty(($col[2] ?? [])['money']) ? 'text-end tabular-nums' : '' }}">{!! $cell($row, $col) !!}</td>
+                        @foreach ($columns as $ci => $col)
+                            <td data-col="{{ $ci }}" class="td {{ ! empty(($col[2] ?? [])['money']) ? 'text-end tabular-nums' : '' }}">{!! $cell($row, $col) !!}</td>
                         @endforeach
                         <td class="td text-end">
                             <div class="inline-flex gap-1">
@@ -161,4 +183,31 @@
     <div class="mt-4">{{ $rows->links() }}</div>
     </div>
 @endif
+@push('scripts')
+<script>
+// Column picker: hides columns with a <style> rule scoped to this list (desktop table and phone cards). The choice lives in this browser.
+window.applyCols = function (route, hidden) {
+    let st = document.getElementById('col-hide-' + route);
+    if (!st) { st = document.createElement('style'); st.id = 'col-hide-' + route; document.head.appendChild(st); }
+    st.textContent = hidden.map(i => '[data-list="' + route + '"] [data-col="' + i + '"]{display:none !important}').join('');
+};
+window.colHidden = function (route, cols) {
+    try { const v = JSON.parse(localStorage.getItem('cols.' + route)); if (Array.isArray(v)) return v; } catch (e) {}
+    return cols.filter(c => c.def).map(c => c.i);   // default: columns flagged 'hidden' in the controller
+};
+document.addEventListener('alpine:init', () => {
+    Alpine.data('colPicker', (route, cols) => ({
+        o: false, cols, hidden: [],
+        init() { this.hidden = colHidden(route, cols); applyCols(route, this.hidden); },
+        get hiddenCount() { return this.hidden.length; },
+        toggle(i) {
+            this.hidden = this.hidden.includes(i) ? this.hidden.filter(x => x !== i) : [...this.hidden, i];
+            localStorage.setItem('cols.' + route, JSON.stringify(this.hidden));
+            applyCols(route, this.hidden);
+        },
+        reset() { localStorage.removeItem('cols.' + route); this.hidden = colHidden(route, cols); applyCols(route, this.hidden); },
+    }));
+});
+</script>
+@endpush
 @endsection
