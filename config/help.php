@@ -34,12 +34,13 @@ return [
         'purpose' => 'Bills sent to customers, with a PDF and a record of what is paid.',
         'how' => ['Create an invoice from a customer (and optionally an order); add line items, discount and tax. After you choose the customer, the Order list shows only that customer\'s orders.',
             'Tick Deduct customer advance if the customer paid before the invoice.', 'Record payments from the invoice page; partial payments are fine.',
+            'Customer settled part of the balance with services or goods instead of money? Open the invoice and use Add adjustment (amount, date, reason). It lowers the balance like a payment, but no cash or bank money moves; it shows as a separate Adjustment line, on the PDF and on the customer statement, and is deducted from your revenue. Remove it from the same page if it was a mistake.',
             'The PDF shows your logo, the status (Paid / Partial / Unpaid), the Total, what was Paid and the Balance, and any note you wrote.'],
-        'tips' => ['Status moves Unpaid → Partial → Paid automatically.', 'The logo on invoices is set in Settings → Branding → Invoice logo.']],
+        'tips' => ['Status moves Unpaid → Partial → Paid automatically (adjustments count as settled).', 'An invoice that has payments or adjustments cannot be deleted.', 'The logo on invoices is set in Settings → Branding → Invoice logo.']],
 
     'customer-payments' => ['group' => 'Business', 'title' => 'Customer payments', 'route' => 'customer-payments.index', 'perm' => 'customer_payments.view',
         'purpose' => 'Money received from customers, either against an invoice or as an advance.',
-        'how' => ['Add a payment: customer, amount, cash or bank. Choose an invoice, or leave it empty to keep it as an advance.', 'Attach the receipt (bank screenshot, deposit slip or cheque photo) so the proof is kept with the payment.',
+        'how' => ['Add a payment: customer, amount, cash or bank. Choose an invoice, or leave it empty to keep it as an advance.', 'Attach the receipt (bank screenshot, deposit slip or cheque photo) so the proof is kept with the payment; a bank-app screenshot is read automatically and fills the amount, date and Via — check them before saving.',
             'Apply an advance to invoices later from the invoice page.'],
         'tips' => ['Unused advances are shown as money you hold for the customer, and count as a liability on the balance sheet.']],
 
@@ -90,7 +91,7 @@ return [
 
     'worker-payments' => ['group' => 'Labour', 'title' => 'Payments & advances', 'route' => 'worker-payments.index', 'perm' => 'worker_payments.view',
         'purpose' => 'Cash or bank payments and advances to workers.',
-        'how' => ['Add a payment or advance; partial payments are fine. Paying from here or from Record payment on the worker\'s page is the same thing: both save to the same records, so the ledger, this list, the dashboard and the reports all show it.', 'Attach the payment slip (bank screenshot or transfer slip) as evidence; it is shown on the voucher page and the worker\'s ledger.', 'Open one (eye icon) for the payment voucher: PDF or WhatsApp.'],
+        'how' => ['Add a payment or advance; partial payments are fine. Paying from here or from Record payment on the worker\'s page is the same thing: both save to the same records, so the ledger, this list, the dashboard and the reports all show it.', 'Attach the payment slip (bank screenshot or transfer slip) as evidence; it is shown on the voucher page and the worker\'s ledger. The slip is read automatically: the amount, date and Via (Bank) are filled in for you, and the transaction id goes into Notes — always check them before saving.', 'Open one (eye icon) for the payment voucher: PDF or WhatsApp.'],
         'tips' => []],
 
     'worker-adjustments' => ['group' => 'Labour', 'title' => 'Deductions & bonuses', 'route' => 'worker-adjustments.index', 'perm' => 'worker_payments.view',
