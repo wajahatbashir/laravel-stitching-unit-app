@@ -89,6 +89,22 @@ if (! function_exists('brand_url')) {
     }
 }
 
+if (! function_exists('brand_data_uri')) {
+    /** The business logo as an inline data URI for PDFs: the Invoice logo from Settings → Branding, else the dashboard logo, else the bundled icon; null if unreadable. */
+    function brand_data_uri(): ?string
+    {
+        $disk = \Illuminate\Support\Facades\Storage::disk('public');
+        $up = collect([biz('brand_invoice_logo'), biz('brand_dashboard_logo')])->first(fn ($p) => $p && $disk->exists($p));
+        $file = $up && \Illuminate\Support\Facades\Storage::disk('public')->exists($up)
+            ? \Illuminate\Support\Facades\Storage::disk('public')->path($up) : public_path('brand/icon-black.png');
+        if (! is_file($file) || ! ($mime = @mime_content_type($file)) || ! str_starts_with($mime, 'image/')) {
+            return null;
+        }
+
+        return 'data:'.$mime.';base64,'.base64_encode(file_get_contents($file));
+    }
+}
+
 if (! function_exists('compact_num')) {
     /** 1,284 / 12.5K / 1.2M — for chart axes and tips. */
     function compact_num($v): string

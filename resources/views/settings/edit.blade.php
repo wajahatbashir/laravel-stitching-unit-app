@@ -21,12 +21,13 @@
 
     <div class="card p-4 md:p-6">
         <h2 class="mb-1 font-semibold">{{ __('Branding') }}</h2>
-        <p class="mb-4 text-xs text-slate-500">{{ __('PNG, JPG or WebP, max 3 MB. Transparent PNG works best. The favicon is also used as the phone app icon — use a square image, at least 512×512.') }}</p>
-        <div class="grid gap-4 md:grid-cols-3">
+        <p class="mb-4 text-xs text-slate-500">{{ __('PNG, JPG or WebP, max 3 MB. Transparent PNG works best. The invoice logo is printed on invoice PDFs (white paper, so use a logo that looks good on white). The favicon is also used as the phone app icon — use a square image, at least 512×512.') }}</p>
+        <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
             @php
                 $slots = [
                     'login_logo' => [__('Login page logo'), '/brand/logo-wordmark.png', 'bg-brand-900'],
                     'dashboard_logo' => [__('Dashboard / sidebar logo'), '/brand/icon-black.png', 'bg-white'],
+                    'invoice_logo' => [__('Invoice logo'), '/brand/icon-black.png', 'bg-white'],
                     'favicon' => [__('Favicon & app icon'), '/icons/icon-192.png', 'bg-white'],
                 ];
             @endphp

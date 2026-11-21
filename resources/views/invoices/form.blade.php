@@ -11,6 +11,8 @@
           'items' => array_values($items), 'orders' => $extra['orders'],
           'discount' => old('discount', $m?->discount ?? 0), 'tax' => old('tax', $m?->tax ?? 0),
           'customer' => (string) old('customer_id', $m?->customer_id ?? request('customer_id')),
+          'order' => (string) old('order_id', $m?->order_id ?? request('order_id')),
+          'noCustomerHint' => __('Pick a customer to see only their orders'),
           'advances' => $extra['advances'], 'paid' => $extra['paidAlready'],
           'useAdv' => (bool) old('apply_advance'), 'advAmount' => old('advance_amount', ''),
       ]) }})" @change="onChange($event)"
@@ -27,10 +29,14 @@
             <x-field :f="$F['customer_id']" :model="$m" />
             <div>
                 <label class="label">{{ __('Order (optional)') }}</label>
-                <select name="order_id" class="input" @change="fromOrder($event.target.value)">
+                {{-- only the chosen customer's orders; with no customer yet, every order (with the customer's name) --}}
+                <select name="order_id" class="input" x-model="order" @change="fromOrder($event.target.value)">
                     <option value="">—</option>
-                    @foreach ($F['order_id']['options'] as $k => $l)<option value="{{ $k }}" @selected((string) old('order_id', $m?->order_id ?? request('order_id')) === (string) $k)>{{ $l }}</option>@endforeach
+                    <template x-for="o in orderList()" :key="o.id">
+                        <option :value="o.id" x-text="orderLabel(o)" :selected="String(o.id) === order"></option>
+                    </template>
                 </select>
+                <p class="mt-1 text-xs text-slate-500" x-show="!customer" x-text="noCustomerHint"></p>
             </div>
             <x-field :f="$F['due_date']" :model="$m" />
         </div>
@@ -112,7 +118,18 @@ function invoiceForm(init) {
             if (e.target.name === 'customer_id') {
                 this.customer = e.target.value;
                 if (this.useAdv) this.advAmount = this.maxApply().toFixed(2);
+                // an order that belongs to another customer cannot stay selected
+                const o = this.orders[this.order];
+                if (o && String(o.customer_id) !== String(this.customer)) this.order = '';
             }
+        },
+        orderList() {
+            return Object.values(this.orders)
+                .filter(o => !this.customer || String(o.customer_id) === String(this.customer))
+                .sort((a, b) => String(a.order_no).localeCompare(String(b.order_no)));
+        },
+        orderLabel(o) {
+            return [o.order_no, !this.customer ? o.customer : '', o.collection_name].filter(Boolean).join(' · ');
         },
         fromOrder(id) {
             const o = this.orders[id];
@@ -121,7 +138,7 @@ function invoiceForm(init) {
             const line = { description: desc, qty: o.qty, rate: o.rate };
             if (this.items.length === 1 && !this.items[0].description) this.items[0] = line; else this.items.push(line);
             const sel = document.querySelector('[name=customer_id]');
-            if (sel && !sel.value) { sel.value = o.customer_id; sel.dispatchEvent(new Event('change', { bubbles: true })); }
+            if (sel && !sel.value) { sel.value = o.customer_id; sel.dispatchEvent(new Event('change', { bubbles: true })); this.order = String(id); }
         },
     };
 }

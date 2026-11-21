@@ -6,12 +6,13 @@ use App\Models\Setting;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 
-/** Admin-uploaded branding: login logo, dashboard logo and favicon (+ generated PWA icon sizes). */
+/** Admin-uploaded branding: login logo, dashboard logo, invoice logo and favicon (+ generated PWA icon sizes). */
 class Brand
 {
     public const SLOTS = [
         'login_logo' => 'Login page logo',
         'dashboard_logo' => 'Dashboard / sidebar logo',
+        'invoice_logo' => 'Invoice logo',
         'favicon' => 'Favicon & app icon',
     ];
 

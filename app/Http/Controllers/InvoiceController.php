@@ -65,7 +65,7 @@ class InvoiceController extends CrudController
     {
         return [
             'items' => $m ? $m->items->map->only('description', 'qty', 'rate')->all() : [],
-            'orders' => Order::with('brand')->get()->mapWithKeys(fn ($o) => [$o->id => ['id' => $o->id, 'order_no' => $o->order_no, 'customer_id' => $o->customer_id, 'qty' => $o->qty, 'rate' => $o->rate,
+            'orders' => Order::with('brand', 'customer')->get()->mapWithKeys(fn ($o) => [$o->id => ['id' => $o->id, 'order_no' => $o->order_no, 'customer_id' => $o->customer_id, 'customer' => $o->customer?->name, 'qty' => $o->qty, 'rate' => $o->rate,
                 'collection_name' => $o->brand_collection, 'fabric_name' => $o->fabric_name]]),
             // unused advance per customer (embedded so it also works offline) + what the invoice has already received
             'advances' => Customer::pluck('id')->mapWithKeys(fn ($id) => [$id => Advances::available($id)])->filter(fn ($v) => $v > 0),
@@ -84,6 +84,9 @@ class InvoiceController extends CrudController
     {
         if (! $m && (empty($data['number']) || Invoice::where('number', $data['number'])->exists())) {
             $data['number'] = Invoice::nextNumber();
+        }
+        if (! empty($data['order_id']) && (int) Order::withoutGlobalScopes()->whereKey($data['order_id'])->value('customer_id') !== (int) $data['customer_id']) {
+            throw ValidationException::withMessages(['order_id' => __('This order belongs to a different customer. Pick one of this customer\'s orders, or clear the order.')]);
         }
         $sub = collect($r->input('items'))->sum(fn ($i) => round($i['qty'] * $i['rate'], 2));
         $data['discount'] = $data['discount'] ?? 0;

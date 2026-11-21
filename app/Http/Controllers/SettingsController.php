@@ -32,6 +32,7 @@ class SettingsController extends Controller
             'business_name' => 'required|string|max:100', 'order_prefix' => 'required|max:10', 'invoice_prefix' => 'required|max:10',
             'login_logo' => 'nullable|image|mimes:png,jpg,jpeg,webp|max:3072',
             'dashboard_logo' => 'nullable|image|mimes:png,jpg,jpeg,webp|max:3072',
+            'invoice_logo' => 'nullable|image|mimes:png,jpg,jpeg,webp|max:3072',
             'favicon' => 'nullable|image|mimes:png,jpg,jpeg,webp|max:3072',
         ]);
 
